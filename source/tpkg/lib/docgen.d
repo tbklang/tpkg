@@ -7,6 +7,52 @@ import std.string : format;
 import std.conv : to;
 import std.string : stripRight;
 
+private struct ParamTable
+{
+    private VariableParameter[] params;
+
+    private static paramToRow(VariableParameter param)
+    {
+        string comment = "TODO: Implement me";
+
+        string s = "<tr>";
+        
+        s ~= format("<td>%s</td><td>%s</td>", param.getName(), comment);
+
+        s ~= "</tr>";
+
+        return s;
+    }
+
+    public void addParam(VariableParameter param)
+    {
+        this.params ~= param;
+    }
+
+    public string serialize()
+    {
+        if(!this.params)
+        {
+            return "";
+        }
+        
+        string s = "<table>";
+
+        s ~= "<thead>";
+        s ~= "<tr><th>Parameter</th><th>Description</th></tr>";
+        s ~= "</thead>";
+
+        foreach(VariableParameter param; this.params)
+        {
+            s ~= paramToRow(param);
+        }
+
+        s ~= "</table>";
+
+        return s;
+    }
+}
+
 private struct HeaderInfo
 {
     private string title;
@@ -151,24 +197,42 @@ public class DocumentGenerator
 
         spacer();
         spacer();
-        // br();
-        // br();
-
-        line("<h3>Functions</h3>");
-        line("<p>All publically visible methods</p>");
 
         // Emit all functions
-        foreach(Statement stmt; mod.getStatements())
+        line("<h3>Functions</h3>");
+        line("<p>All publically visible methods</p>");
+        bool onlyFuncs(Statement s) { return cast(Function)s !is null; }
+        Statement[] funcs;
+        filter!(Statement)(mod.getStatements(), predicateOf!(onlyFuncs), funcs);
+        foreach(Statement stmt; funcs)
         {
-            Function func =  cast(Function)stmt;
-            if(func)
-            {
-                // TODO: Ensure only PUBLIC methods listed
-                generateFunctionBlock(func);
-            }
+            Function func = cast(Function)stmt;
+            // TODO: Ensure only PUBLIC methods listed
+            generateFunctionBlock(func);
+        }
+
+        // Emit all variables
+        line("<h3>Variable</h3>");
+        line("<p>All publically visible variables</p>");
+        bool onlyVars(Statement s) { return cast(Variable)s !is null; }
+        Statement[] vars;
+        filter!(Statement)(mod.getStatements(), predicateOf!(onlyVars), vars);
+        foreach(Statement stmt; vars)
+        {
+            Variable var = cast(Variable)stmt;
+            // TODO: Ensure only PUBLIC methods listed
+            generateVariableBlock(var);
         }
 
     }
+
+    private void generateVariableBlock(Variable var)
+    {
+
+    }
+
+    import niknaks.arrays : filter;
+    import niknaks.functional : predicateOf, Predicate;
 
     private void spacer()
     {
@@ -177,12 +241,14 @@ public class DocumentGenerator
 
     private void generateFunctionBlock(Function func)
     {
+        ParamTable table;
         VariableParameter[] params = func.getParams();
 
         string paramText;
         foreach(VariableParameter param; params)
         {
             paramText ~= format("%s %s, ", param.getType(), param.getName());
+            table.addParam(param);
         }
         paramText = stripRight(paramText, " ,");
 
@@ -192,8 +258,10 @@ public class DocumentGenerator
             closeBlock();
         }
 
-        line(format("<h4>%s %s<i>(%s)</i></h4>", func.getType(), func.getName(), paramText));
+        line(format("<h4><mark>%s</mark> %s<i>(%s)</i></h4>", func.getType(), func.getName(), paramText));
         line("<pre>Comment goes here</pre>");
+        line(table.serialize());
+        line(format("<p><b>Returns:</b> <code>%s</code><p>", func.getType()));
     }
 
     private void openBlock()
