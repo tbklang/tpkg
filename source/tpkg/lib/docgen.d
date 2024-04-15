@@ -12,15 +12,23 @@ private struct HeaderInfo
     private string title;
     private string description;
 
+
+    private string extra;
+
+    public void setExtra(string extra)
+    {
+        this.extra = extra;
+    }
+
     public string serialize()
     {
         string bdy;
 
-        bdy = format("<html>\n<head>\n\t<title>%s</title>\n</head>\n", this.title);
+        bdy = format("<html>\n<head>\n\t<title>%s</title>\n%s\n</head>\n", this.title, this.extra);
 
-        bdy ~= format("<body>\n\t<h1>%s</h1>\n\t<h4>%s</h4>", this.title, this.description);
+        bdy ~= format("<body>\n\t<header><h1>%s</h1>\n\t<h4>%s</h4></header>", this.title, this.description);
 
-        bdy ~= "<hr>\n";
+        bdy ~= "<br>\n";
 
         return bdy;
     }
@@ -33,6 +41,12 @@ private struct DocState
     public void makeHeader(string title, string description)
     {
         this.hdr = HeaderInfo(title, description);
+
+        // Set sakura CSS
+        // this.hdr.setExtra(`<link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura.css" type="text/css">`);
+        
+        // Set Simple.css
+        this.hdr.setExtra(`<link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">`);
     }
 
     private string bdy;
@@ -120,8 +134,24 @@ public class DocumentGenerator
         }
         paramText = stripRight(paramText, " ,");
 
+        openBlock();
+        scope(exit)
+        {
+            closeBlock();
+        }
+
         line(format("<h4>%s %s<i>(%s)</i></h4>", func.getType(), func.getName(), paramText));
         line("<pre>Comment goes here</pre>");
+    }
+
+    private void openBlock()
+    {
+        line("<article>");
+    }
+
+    private void closeBlock()
+    {
+        line("</article>");
     }
 
     private void title(string title, string description)
