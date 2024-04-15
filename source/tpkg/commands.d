@@ -4,6 +4,7 @@ import jcli;
 import tpkg.logging;
 
 import std.stdio : stdin;
+import niknaks.mechanisms : Prompter, Prompt;
 
 private mixin template BaseCommands()
 {
