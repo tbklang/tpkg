@@ -33,7 +33,7 @@ public class DocumentGenerator
         line("<h4>Program documentation</h4>");
         hr(fileOut);
 
-        generateModuleListing();
+        generateModuleListing(this.program);
 
     }
 
@@ -42,18 +42,24 @@ public class DocumentGenerator
         line("<hr>");
     }
 
-    public void generateModuleListing()
+    public void generateModuleListing(Program program)
     {
+        Module[] modules = program.getModules();
         line("<h2>Modules</h2>");
-        line("<p>These are all the modules available in the program.</p>");
+        line(format("<p>These are the <b>%d</b> modules available in the program.</p>", modules.length));
         
         listBegin();
-        foreach(Module mod; this.program.getModules())
+        foreach(Module mod; modules)
         {
-            item(format("<a href=%s.html>%s</a>", mod.getName(), mod.getName()));
+            item(format("%s at <i>%s</i>", link(mod.getName()~".html", mod.getName()), mod.getFilePath()));
         }
         listEnd();
         
+    }
+
+    private static string link(string to, string content)
+    {
+        return format("<a href=%s>%s</a>", to, content);
     }
 
     // If in list mode, makes it all a list item, else just
