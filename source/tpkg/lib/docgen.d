@@ -20,13 +20,41 @@ private struct HeaderInfo
         this.extra = extra;
     }
 
+
+    private string[string] links;
+
+    public void addLink(string name, string link)
+    {
+        this.links[name] = link;
+    }
+
+    private static string genLink(string name, string link)
+    {
+        return format(`<a href="%s">%s</a>`, link, name);
+    }
+
+    private string genLinks()
+    {
+        if(!this.links)
+        {
+            return "";
+        }
+
+        string nav;
+        foreach(string name; this.links.keys())
+        {
+            nav ~= genLink(name, this.links[name]);
+        }
+        return format("<nav>%s</nav>", nav);
+    }
+
     public string serialize()
     {
         string bdy;
 
         bdy = format("<html>\n<head>\n\t<title>%s</title>\n%s\n</head>\n", this.title, this.extra);
 
-        bdy ~= format("<body>\n\t<header><h1>%s</h1>\n\t<h4>%s</h4></header>", this.title, this.description);
+        bdy ~= format("<body>\n\t<header><h1>%s</h1>\n\t<h4>%s</h4>%s</header>", this.title, this.description, genLinks());
 
         bdy ~= "<br>\n";
 
@@ -56,6 +84,11 @@ private struct DocState
         this.bdy ~= format("%s\n", line);
     }
 
+    public void addLink(string name, string to)
+    {
+        this.hdr.addLink(name, to);
+    }
+
     public string serialize()
     {
         return this.hdr.serialize()~this.bdy~"\n</body>\n</html>";
@@ -80,6 +113,11 @@ public class DocumentGenerator
     {
         this.directory = directory;
         this.program = program;
+    }
+
+    private void addLink(string name, string to)
+    {
+        this.state.addLink(name, to);
     }
 
     private void line(string text)
@@ -216,7 +254,9 @@ public class DocumentGenerator
         listBegin();
         foreach(Module mod; modules)
         {
-            item(format("%s at <i>%s</i>", link(mod.getName()~".html", mod.getName()), mod.getFilePath()));
+            string modPageLink = mod.getName()~".html";
+            addLink(mod.getName(), modPageLink);
+            item(format("%s at <i>%s</i>", link(modPageLink, mod.getName()), mod.getFilePath()));
         }
         listEnd();
         
