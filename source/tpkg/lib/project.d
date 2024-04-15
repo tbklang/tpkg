@@ -37,6 +37,7 @@ public struct Project
         return root;
     }
 
+    // TODO: Must be defensively programmed
     public static Project deserialize(JSONValue json)
     {
         Project proj;
