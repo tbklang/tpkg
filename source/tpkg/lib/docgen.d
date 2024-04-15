@@ -149,16 +149,30 @@ public class DocumentGenerator
 
         title(format("Module %s", mod.getName()), format("At file %s", mod.getFilePath()));
 
+        spacer();
+        spacer();
+        // br();
+        // br();
+
+        line("<h3>Functions</h3>");
+        line("<p>All publically visible methods</p>");
+
         // Emit all functions
         foreach(Statement stmt; mod.getStatements())
         {
             Function func =  cast(Function)stmt;
             if(func)
             {
+                // TODO: Ensure only PUBLIC methods listed
                 generateFunctionBlock(func);
             }
         }
 
+    }
+
+    private void spacer()
+    {
+        line("<div></div>");
     }
 
     private void generateFunctionBlock(Function func)
