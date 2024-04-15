@@ -15,4 +15,4 @@ tpkg-test-*
 *.obj
 *.lst
 dub.selections.json
-out/index.html
+out/
