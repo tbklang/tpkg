@@ -4,6 +4,50 @@ import tlang.compiler.symbols.data;
 import tlang.compiler.symbols.containers;
 import std.stdio;
 import std.string : format;
+import std.conv : to;
+import std.string : stripRight;
+
+private struct HeaderInfo
+{
+    private string title;
+    private string description;
+
+    public string serialize()
+    {
+        string bdy;
+
+        bdy = format("<html>\n<head>\n\t<title>%s</title>\n</head>\n", this.title);
+
+        bdy ~= format("<body>\n\t<h1>%s</h1>\n\t<h4>%s</h4>", this.title, this.description);
+
+        bdy ~= "<hr>\n";
+
+        return bdy;
+    }
+}
+
+private struct DocState
+{
+    private HeaderInfo hdr;
+    
+    public void makeHeader(string title, string description)
+    {
+        this.hdr = HeaderInfo(title, description);
+    }
+
+    private string bdy;
+
+    public void appendLine(string line)
+    {
+        this.bdy ~= format("%s\n", line);
+    }
+
+    public string serialize()
+    {
+        return this.hdr.serialize()~this.bdy~"\n</body>\n</html>";
+    }
+}
+
 
 public class DocumentGenerator
 {
@@ -12,6 +56,7 @@ public class DocumentGenerator
 
     // Current file being written to
     private File fileOut;
+    private DocState state;
 
     // Writer state
     private bool listActive = false;
@@ -25,7 +70,8 @@ public class DocumentGenerator
 
     private void line(string text)
     {
-        fileOut.writeln(text);
+        // fileOut.writeln(text);
+        this.state.appendLine(text);
     }
 
     public void generate()
@@ -49,17 +95,40 @@ public class DocumentGenerator
             closeFile();
         }
 
-        title(format("Module %s", mod.getName()));
+        title(format("Module %s", mod.getName()), format("At file %s", mod.getFilePath()));
+
+        // Emit all functions
+        foreach(Statement stmt; mod.getStatements())
+        {
+            Function func =  cast(Function)stmt;
+            if(func)
+            {
+                generateFunctionBlock(func);
+            }
+        }
 
     }
 
-    private void title(string text)
+    private void generateFunctionBlock(Function func)
     {
-        // TODO: This should set <title> as well but maybe
-        // in some seperate flush-later few buffer(s),
-        // hence line() should be replaced with
-        // a buffer that is flushed later
-        line(format("<h1>%s</h1>", text));
+        VariableParameter[] params = func.getParams();
+
+        string paramText;
+        foreach(VariableParameter param; params)
+        {
+            paramText ~= format("%s %s, ", param.getType(), param.getName());
+        }
+        paramText = stripRight(paramText, " ,");
+
+        line(format("<h4>%s %s<i>(%s)</i></h4>", func.getType(), func.getName(), paramText));
+        line("<pre>Comment goes here</pre>");
+    }
+
+    private void title(string title, string description)
+    {
+
+        this.state.makeHeader(title, description);
+
     }
 
     private void openFile(string filename)
@@ -70,7 +139,11 @@ public class DocumentGenerator
             throw new Exception("Cannot call openFile(string) if there is already a file open. This is a developer bug");
         }
 
+        // Open output file
         this.fileOut.open(this.directory~"/"~filename, "wb");
+
+        // Clear doc state
+        this.state = DocState();
     }
 
     private void closeFile()
@@ -80,6 +153,8 @@ public class DocumentGenerator
             throw new Exception("Cannot call closeFile() if there is NO file open. This is a developer bug");
         }
 
+        // Flush out the header info
+        this.fileOut.writeln(this.state.serialize());
         this.fileOut.flush();
         this.fileOut.close();
     }
@@ -93,12 +168,7 @@ public class DocumentGenerator
             closeFile();
         }
 
-        line("<html>");
-        line("<body>");
-        line(format("<h1>Program</h1>"));
-        line("<h4>Program documentation</h4>");
-        hr(fileOut);
-
+        title("Program", "Program documentation");
         generateModuleListing(program);
     }
 
