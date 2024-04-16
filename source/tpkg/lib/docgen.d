@@ -266,7 +266,7 @@ public class DocumentGenerator
     private void generateFunctionBlock(Function func)
     {
         Comment comment = func.getComment();
-        string commentStr = comment is null ? "<i>No description</i>" : format("<pre>%s</pre>", comment.getContent());
+        string commentStr = comment is null ? "<i>No description</i>" : format("<pre wrap>%s</pre>", comment.getContent());
 
         ParamTable table = ParamTable(comment);
         VariableParameter[] params = func.getParams();
