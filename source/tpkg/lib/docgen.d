@@ -231,6 +231,12 @@ public class DocumentGenerator
         Comment comment = var.getComment();
         string commentStr = comment is null ? "<i>No description</i>" : format("<pre>%s</pre>", comment.getContent());
 
+        openBlock();
+        scope(exit)
+        {
+            closeBlock();
+        }
+        
         line(format("<h4><mark>%s</mark> %s</h4>", var.getType(), var.getName()));
         line(commentStr);
     }
