@@ -2,6 +2,7 @@ module tpkg.lib.docgen;
 
 import tlang.compiler.symbols.data;
 import tlang.compiler.symbols.containers;
+import tlang.compiler.symbols.comments;
 import std.stdio;
 import std.string : format;
 import std.conv : to;
@@ -11,10 +12,15 @@ private struct ParamTable
 {
     private VariableParameter[] params;
 
-    private static paramToRow(VariableParameter param)
-    {
-        string comment = "TODO: Implement me";
+    private ParamDoc[string] pDocs;
 
+    this(Function func)
+    {
+        this.pDocs = func.getComment().getAllParamDocs();
+    }
+
+    private static paramToRow(VariableParameter param, string comment)
+    {
         string s = "<tr>";
         
         s ~= format("<td>%s</td><td>%s</td>", param.getName(), comment);
@@ -44,7 +50,10 @@ private struct ParamTable
 
         foreach(VariableParameter param; this.params)
         {
-            s ~= paramToRow(param);
+            ParamDoc* pDoc = param.getName() in this.pDocs;
+            string comment = pDoc !is null ? pDoc.description : "<i>No comment</i>";
+
+            s ~= paramToRow(param, comment);
         }
 
         s ~= "</table>";
@@ -259,7 +268,7 @@ public class DocumentGenerator
         Comment comment = func.getComment();
         string commentStr = comment is null ? "<i>No description</i>" : format("<pre>%s</pre>", comment.getContent());
 
-        ParamTable table;
+        ParamTable table = ParamTable(func);
         VariableParameter[] params = func.getParams();
 
         string paramText;
