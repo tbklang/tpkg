@@ -221,7 +221,7 @@ public class DocumentGenerator
         }
 
         // Emit all variables
-        line("<h3>Variable</h3>");
+        line("<h3>Variables</h3>");
         line("<p>All publically visible variables</p>");
         bool onlyVars(Statement s) { return cast(Variable)s !is null; }
         Statement[] vars;
