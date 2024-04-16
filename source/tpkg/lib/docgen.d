@@ -220,7 +220,7 @@ public class DocumentGenerator
         foreach(Statement stmt; vars)
         {
             Variable var = cast(Variable)stmt;
-            // TODO: Ensure only PUBLIC methods listed
+            // TODO: Ensure only PUBLIC variables listed
             generateVariableBlock(var);
         }
 
@@ -236,9 +236,14 @@ public class DocumentGenerator
         {
             closeBlock();
         }
-        
+
         line(format("<h4><mark>%s</mark> %s</h4>", var.getType(), var.getName()));
         line(commentStr);
+
+        if(var.isExternal())
+        {
+            line("<p>This variable is <code>extern</code></p>");
+        }
     }
 
     import niknaks.arrays : filter;
