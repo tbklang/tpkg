@@ -241,6 +241,9 @@ public class DocumentGenerator
 
     private void generateFunctionBlock(Function func)
     {
+        Comment comment = func.getComment();
+        string commentStr = comment is null ? "<i>No description</i>" : format("<pre>%s</pre>", comment.getContent());
+
         ParamTable table;
         VariableParameter[] params = func.getParams();
 
@@ -259,7 +262,7 @@ public class DocumentGenerator
         }
 
         line(format("<h4><mark>%s</mark> %s<i>(%s)</i></h4>", func.getType(), func.getName(), paramText));
-        line("<pre>Comment goes here</pre>");
+        line(commentStr);
         line(table.serialize());
         line(format("<p><b>Returns:</b> <code>%s</code><p>", func.getType()));
     }
@@ -385,7 +388,8 @@ unittest
     File testF = File("out/index.html", "wb");
 
     // TODO: Fix this to have these locally available and not hardcoded to my machine's paths
-    string inputFilePath = "../code/source/tlang/testing/modules/a.t";
+    // string inputFilePath = "../code/source/tlang/testing/modules/a.t";
+    string inputFilePath = "../code/source/tlang/testing/simple_comments.t";
     string sourceEntry = gibFileData(inputFilePath);
 
     
