@@ -14,9 +14,9 @@ private struct ParamTable
 
     private ParamDoc[string] pDocs;
 
-    this(Function func)
+    this(Comment funcComment)
     {
-        this.pDocs = func.getComment().getAllParamDocs();
+        this.pDocs = funcComment.getAllParamDocs();
     }
 
     private static paramToRow(VariableParameter param, string comment)
@@ -268,7 +268,7 @@ public class DocumentGenerator
         Comment comment = func.getComment();
         string commentStr = comment is null ? "<i>No description</i>" : format("<pre>%s</pre>", comment.getContent());
 
-        ParamTable table = ParamTable(func);
+        ParamTable table = ParamTable(comment);
         VariableParameter[] params = func.getParams();
 
         string paramText;
@@ -288,7 +288,22 @@ public class DocumentGenerator
         line(format("<h4><mark>%s</mark> %s<i>(%s)</i></h4>", func.getType(), func.getName(), paramText));
         line(commentStr);
         line(table.serialize());
-        line(format("<p><b>Returns:</b> <code>%s</code><p>", func.getType()));
+
+        string returnDocStr;
+        ReturnsDoc retDoc;
+
+        // If there was a @return
+        if(comment.getReturnDoc(retDoc))
+        {
+            returnDocStr = retDoc.getDescription();
+        }
+        // If not, default to the return type
+        else
+        {
+            returnDocStr = format("<code>%s</code>", func.getType());
+        }
+
+        line(format("<p><b>Returns:</b> %s<p>", returnDocStr));
     }
 
     private void openBlock()
