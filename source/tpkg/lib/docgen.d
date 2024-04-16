@@ -263,10 +263,15 @@ public class DocumentGenerator
         line("<div></div>");
     }
 
+    private static string textBlockGray(string text)
+    {
+        return format("<pre wrap>%s</pre>", text);
+    }
+
     private void generateFunctionBlock(Function func)
     {
         Comment comment = func.getComment();
-        string commentStr = comment is null ? "<i>No description</i>" : format("<pre wrap>%s</pre>", comment.getContent());
+        string commentStr = comment is null ? "<i>No description</i>" : textBlockGray(comment.getContent());
 
         ParamTable table = ParamTable(comment);
         VariableParameter[] params = func.getParams();
