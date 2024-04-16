@@ -228,7 +228,11 @@ public class DocumentGenerator
 
     private void generateVariableBlock(Variable var)
     {
+        Comment comment = var.getComment();
+        string commentStr = comment is null ? "<i>No description</i>" : format("<pre>%s</pre>", comment.getContent());
 
+        line(format("<h4><mark>%s</mark> %s</h4>", var.getType(), var.getName()));
+        line(commentStr);
     }
 
     import niknaks.arrays : filter;
