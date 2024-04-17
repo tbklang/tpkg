@@ -51,7 +51,7 @@ private struct ParamTable
         foreach(VariableParameter param; this.params)
         {
             ParamDoc* pDoc = param.getName() in this.pDocs;
-            string comment = pDoc !is null ? pDoc.description : "<i>No comment</i>";
+            string comment = pDoc !is null ? pDoc.getDescription() : "<i>No comment</i>";
 
             s ~= paramToRow(param, comment);
         }
