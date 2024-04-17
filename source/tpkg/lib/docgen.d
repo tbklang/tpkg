@@ -14,9 +14,9 @@ private struct ParamTable
 
     private ParamDoc[string] pDocs;
 
-    this(Comment funcComment)
+    this(ParamDoc[string] pDocs)
     {
-        this.pDocs = funcComment.getAllParamDocs();
+        this.pDocs = pDocs;
     }
 
     private static paramToRow(VariableParameter param, string comment)
@@ -273,7 +273,7 @@ public class DocumentGenerator
         Comment comment = func.getComment();
         string commentStr = comment is null ? "<i>No description</i>" : textBlockGray(comment.getContent());
 
-        ParamTable table = ParamTable(comment);
+        ParamTable table = ParamTable(comment !is null ? comment.getAllParamDocs() : null);
         VariableParameter[] params = func.getParams();
 
         string paramText;
@@ -297,8 +297,8 @@ public class DocumentGenerator
         string returnDocStr;
         ReturnsDoc retDoc;
 
-        // If there was a @return
-        if(comment.getReturnDoc(retDoc))
+        // If there is a comment AND if there was a @return
+        if(comment !is null && comment.getReturnDoc(retDoc))
         {
             returnDocStr = retDoc.getDescription();
         }
