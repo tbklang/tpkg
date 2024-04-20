@@ -1,6 +1,8 @@
 module tpkg.lib.project;
 
 import std.json;
+import tpkg.logging;
+import std.string : format;
 
 public struct Project
 {
@@ -34,18 +36,43 @@ public struct Project
         root["name"] = this.name;
         root["description"] = this.description;
 
+        DEBUG(format("Serialized to: %s ", root));
+
         return root;
     }
 
     // TODO: Must be defensively programmed
-    public static Project deserialize(JSONValue json)
+    public static bool deserialize(JSONValue json, ref Project proj)
     {
-        Project proj;
+        JSONValue* nameFieldPtr = "name" in json;
+        if(nameFieldPtr is null)
+        {
+            ERROR("Missing the 'name' field");
+            return false;
+        }
+        else if(nameFieldPtr.type() != JSONType.string)
+        {
+            ERROR("The 'name' field must be a string");
+            return false;
+        }
 
         proj.setName(json["name"].str());
+
+        JSONValue* descriptionFieldPtr = "description" in json;
+        if(descriptionFieldPtr is null)
+        {
+            ERROR("Missing the 'description' field");
+            return false;
+        }
+        else if(descriptionFieldPtr.type() != JSONType.string)
+        {
+            ERROR("The 'description' field must be a string");
+            return false;
+        }
+
         proj.setDescription(json["description"].str());
 
-        return proj;
+        return true;
     }
 }
 
@@ -58,8 +85,9 @@ unittest
 
     JSONValue json = proj.serialize();
 
-    Project projOut = proj.deserialize(json);
-
+    Project projOut;
+    assert(proj.deserialize(json, projOut));
+    
     assert(proj.getName() == projOut.getName());
     assert(proj.getDescription() == projOut.getDescription());
 }
