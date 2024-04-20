@@ -37,9 +37,6 @@ private mixin template BaseFunctions()
             return false;
         }
 
-        // TODO: Read project descriptor and THEN determine the entry point from
-        // that
-
         JSONValue json;
         try
         {
@@ -52,10 +49,7 @@ private mixin template BaseFunctions()
             return false;
         }
         
-        
-        proj = Project.deserialize(json);
-
-        return true;
+        return Project.deserialize(json, proj);
     }
 }
 
