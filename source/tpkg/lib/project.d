@@ -4,10 +4,30 @@ import std.json;
 import tpkg.logging;
 import std.string : format;
 
+public enum ProjectType
+{
+    UNKNOWN,
+    APPLICATION
+}
+
+public static ProjectType getProjectType(string str)
+{
+    if(str == "application")
+    {
+        return ProjectType.APPLICATION;
+    }
+    else
+    {
+        return ProjectType.UNKNOWN;
+    }
+}
+
 public struct Project
 {
     private string name;
     private string description;
+    private ProjectType type;
+    private string entrypoint;
 
     public void setName(string name)
     {
@@ -19,6 +39,16 @@ public struct Project
         this.description = description;
     }
 
+    public void setType(ProjectType type)
+    {
+        this.type = type;
+    }
+
+    public void setEntrypoint(string entrypoint)
+    {
+        this.entrypoint = entrypoint;
+    }
+
     public string getName()
     {
         return this.name;
@@ -27,6 +57,16 @@ public struct Project
     public string getDescription()
     {
         return this.description;
+    }
+
+    public ProjectType getType()
+    {
+        return this.type;
+    }
+
+    public string getEntrypoint()
+    {
+        return this.entrypoint;
     }
 
     public JSONValue serialize()
@@ -71,6 +111,43 @@ public struct Project
         }
 
         proj.setDescription(json["description"].str());
+
+        JSONValue* projectTypePtr = "type" in json;
+        if(projectTypePtr is null)
+        {
+            ERROR("Missing the 'type' field");
+            return false;
+        }
+        else if(projectTypePtr.type() != JSONType.string)
+        {
+            ERROR("The 'type' field must be a string");
+            return false;
+        }
+
+        ProjectType projectType = getProjectType(json["type"].str());
+        if(projectType == ProjectType.UNKNOWN)
+        {
+            ERROR("The project type is not set to anything supported");
+        }
+
+        proj.setType(projectType);
+
+        if(projectType == ProjectType.APPLICATION)
+        {
+            JSONValue* entrypointPtr = "entrypoint" in json;
+            if(entrypointPtr is null)
+            {
+                ERROR("When using the application project type there must be an 'entrypoint' field");
+                return false;
+            }
+            else if(entrypointPtr.type() != JSONType.string)
+            {
+                ERROR("The 'entrypoint' field must be a string");
+                return false;
+            }
+
+            proj.setEntrypoint(json["entrypoint"].str());
+        }
 
         return true;
     }
