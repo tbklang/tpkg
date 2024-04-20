@@ -3,13 +3,15 @@ module tpkg.commands;
 import jcli;
 import tpkg.logging;
 
-import std.stdio : stdin;
+import std.stdio : stdin, File;
+import tlang.compiler.symbols.data : Program;
 import niknaks.mechanisms : Prompter, Prompt;
 import tpkg.lib.project : Project;
 import std.json;
 import std.string : format;
 import std.exception : ErrnoException;
 import tpkg.lib.docgen;
+import tlang.compiler.core : Compiler, gibFileData;
 
 private mixin template BaseFunctions()
 {
@@ -111,7 +113,20 @@ struct DocGenCommand
         Project proj;
         if(openProject(directory, proj))
         {
-            // DocumentGenerator dg = new DocumentGenerator(docDir);
+            File testF = File("out/index.html", "wb");
+
+            string inputFilePath = proj.getEntrypoint();
+            string sourceEntry = gibFileData(inputFilePath);
+
+            
+            Compiler c = new Compiler(sourceEntry, inputFilePath, File("/tmp/kak.bruh", "wb"));
+            c.doLex();
+            c.doParse();
+
+            Program prog = c.getProgram();
+
+
+            DocumentGenerator dg = new DocumentGenerator(directory, prog);
         }
         else
         {
