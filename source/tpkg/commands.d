@@ -113,7 +113,7 @@ struct DocGenCommand
         Project proj;
         if(openProject(directory, proj))
         {
-            File testF = File("out/index.html", "wb");
+            // File testF = File("out/index.html", "wb");
 
             string inputFilePath = proj.getEntrypoint();
             string sourceEntry = gibFileData(inputFilePath);
@@ -126,7 +126,8 @@ struct DocGenCommand
             Program prog = c.getProgram();
 
 
-            DocumentGenerator dg = new DocumentGenerator(directory, prog);
+            DocumentGenerator dg = new DocumentGenerator(docDir, prog);
+            dg.generate();
         }
         else
         {
