@@ -113,19 +113,16 @@ struct DocGenCommand
         Project proj;
         if(openProject(directory, proj))
         {
-            // File testF = File("out/index.html", "wb");
-
             string inputFilePath = proj.getEntrypoint();
             string sourceEntry = gibFileData(inputFilePath);
 
-            
+            // Lex and parse
             Compiler c = new Compiler(sourceEntry, inputFilePath, File("/tmp/kak.bruh", "wb"));
             c.doLex();
             c.doParse();
 
+            // Perform document generation on the given program
             Program prog = c.getProgram();
-
-
             DocumentGenerator dg = new DocumentGenerator(docDir, prog);
             dg.generate();
         }
