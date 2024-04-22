@@ -15,4 +15,7 @@ tpkg-test-*
 *.obj
 *.lst
 dub.selections.json
+
+# Outputs from unittests and manual testing
 out/
+doc/
