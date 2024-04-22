@@ -43,7 +43,7 @@ private mixin template BaseFunctions()
         try
         {
             json = parseJSON(cast(string)descriptorFile);
-            DEBUG(json);
+            DEBUG(json.toPrettyString());
         }
         catch(JSONException e)
         {
@@ -130,7 +130,7 @@ struct DocGenCommand
             DocumentGenerator dg = new DocumentGenerator(docDir, prog);
             dg.generate();
 
-            INFO(format("Generated dicumentaiton in %s", watch.peek()));
+            INFO(format("Generated documentation in %s", watch.peek()));
         }
         else
         {
