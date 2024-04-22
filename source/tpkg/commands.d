@@ -116,6 +116,10 @@ struct DocGenCommand
             string inputFilePath = proj.getEntrypoint();
             string sourceEntry = gibFileData(inputFilePath);
 
+            import std.datetime.stopwatch : StopWatch, AutoStart;
+            StopWatch watch = StopWatch(AutoStart.no);
+            watch.start();
+
             // Lex and parse
             Compiler c = new Compiler(sourceEntry, inputFilePath, File("/tmp/kak.bruh", "wb"));
             c.doLex();
@@ -125,11 +129,14 @@ struct DocGenCommand
             Program prog = c.getProgram();
             DocumentGenerator dg = new DocumentGenerator(docDir, prog);
             dg.generate();
+
+            INFO(format("Generated dicumentaiton in %s", watch.peek()));
         }
         else
         {
             ERROR("Could not generate documentation");
         }
+        
         
     }
 }
