@@ -7,6 +7,8 @@ import std.stdio;
 import std.string : format;
 import std.conv : to;
 import std.string : stripRight;
+import std.datetime.stopwatch : StopWatch, AutoStart;
+import tpkg.logging;
 
 private struct ParamTable
 {
@@ -150,7 +152,6 @@ private struct DocState
     }
 }
 
-
 public class DocumentGenerator
 {
     private Program program;
@@ -159,6 +160,9 @@ public class DocumentGenerator
     // Current file being written to
     private File fileOut;
     private DocState state;
+
+    // Statistics
+    private StopWatch watch;
 
     // Writer state
     private bool listActive = false;
@@ -336,6 +340,9 @@ public class DocumentGenerator
             throw new Exception("Cannot call openFile(string) if there is already a file open. This is a developer bug");
         }
 
+        // Start time
+        this.watch = StopWatch(AutoStart.yes);
+
         // Open output file
         this.fileOut.open(this.directory~"/"~filename, "wb");
 
@@ -349,6 +356,9 @@ public class DocumentGenerator
         {
             throw new Exception("Cannot call closeFile() if there is NO file open. This is a developer bug");
         }
+
+        // Print statistics
+        INFO(format("Generated '%s' in %s", this.fileOut.name(), this.watch.peek()));
 
         // Flush out the header info
         this.fileOut.writeln(this.state.serialize());
