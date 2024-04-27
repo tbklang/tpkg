@@ -12,6 +12,9 @@ import std.string : format;
 import std.exception : ErrnoException;
 import tpkg.lib.docgen;
 import tlang.compiler.core : Compiler, gibFileData;
+import niknaks.config : Registry;
+
+public Registry* reg;
 
 private mixin template BaseFunctions()
 {
