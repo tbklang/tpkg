@@ -81,16 +81,34 @@ struct InitCommand
 
         // TODO: Prompt project information here
         Prompter prompter = new Prompter(stdin);
-        prompter.addPrompt(Prompt("Project name: "));
-        prompter.addPrompt(Prompt("Project description: "));
+        prompter.addPrompt(Prompt("Project name: ", false, false));
+        prompter.addPrompt(Prompt("Project description: ", false, false));
 
 
         Prompt[] answers = prompter.prompt();
 
         Project proj;
-        proj.setName(answers[0].getValue());
-        proj.setDescription(answers[1].getValue());
-
+        string projName;
+        if(answers[0].getValue(projName))
+        {
+            proj.setName(projName);
+        }
+        else
+        {
+            ERROR("Could not get a valid project name");
+            return;
+        }
+        string projDescription;
+        if(answers[1].getValue(projDescription))
+        {
+            proj.setDescription(projDescription);
+        }
+        else
+        {
+            ERROR("Could not get a valid project description");
+            return;
+        }
+        
         JSONValue json = proj.serialize();
         string jsonStr = json.toPrettyString();
         DEBUG(format("Generated project descriptor:\n%s", jsonStr));
