@@ -13,6 +13,7 @@ import std.exception : ErrnoException;
 import tpkg.lib.docgen;
 import tlang.compiler.core : Compiler, gibFileData;
 import niknaks.config : Registry;
+import niknaks.arrays : unique;
 
 public Registry* reg;
 
@@ -83,6 +84,7 @@ struct InitCommand
         Prompter prompter = new Prompter(stdin);
         prompter.addPrompt(Prompt("Project name: ", false, false));
         prompter.addPrompt(Prompt("Project description: ", false, false));
+        prompter.addPrompt(Prompt("Dependencies?: ", true));
 
 
         Prompt[] answers = prompter.prompt();
@@ -108,6 +110,11 @@ struct InitCommand
             ERROR("Could not get a valid project description");
             return;
         }
+
+        string[] projDeps;
+        answers[2].getValues(projDeps);
+        projDeps = unique(projDeps);
+        DEBUG("Dependencies wanted: ", projDeps);
         
         JSONValue json = proj.serialize();
         string jsonStr = json.toPrettyString();
