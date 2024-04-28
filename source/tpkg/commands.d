@@ -115,6 +115,7 @@ struct InitCommand
         answers[2].getValues(projDeps);
         projDeps = unique(projDeps);
         DEBUG("Dependencies wanted: ", projDeps);
+        proj.setDependencies(projDeps);
         
         JSONValue json = proj.serialize();
         string jsonStr = json.toPrettyString();

@@ -28,6 +28,7 @@ public struct Project
     private string description;
     private ProjectType type;
     private string entrypoint;
+    private string[] dependencies;
 
     public void setName(string name)
     {
@@ -47,6 +48,11 @@ public struct Project
     public void setEntrypoint(string entrypoint)
     {
         this.entrypoint = entrypoint;
+    }
+
+    public void setDependencies(string[] dependencies)
+    {
+        this.dependencies = dependencies;
     }
 
     public string getName()
@@ -69,12 +75,18 @@ public struct Project
         return this.entrypoint;
     }
 
+    public string[] getDependencies()
+    {
+        return this.dependencies;
+    }
+
     public JSONValue serialize()
     {
         JSONValue root;
 
         root["name"] = this.name;
         root["description"] = this.description;
+        root["dependencies"] = this.dependencies;
 
         DEBUG(format("Serialized to: %s ", root));
 
@@ -147,6 +159,24 @@ public struct Project
             }
 
             proj.setEntrypoint(json["entrypoint"].str());
+        }
+
+        JSONValue* projectDepsPtr = "dependencies" in json;
+        string[] deps;
+        if(projectDepsPtr)
+        {
+            foreach(JSONValue arrElem; projectDepsPtr.array())
+            {
+                if(arrElem.type() == JSONType.string)
+                {
+                    deps ~= arrElem.str();
+                }
+                else
+                {
+                    ERROR(format("A dependency must be a string not a '%s'", arrElem.type()));
+                    return false;
+                }
+            }
         }
 
         return true;
