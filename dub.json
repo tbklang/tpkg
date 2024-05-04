@@ -7,7 +7,7 @@
 		"gogga": ">=3.1.1",
 		"jcli": "0.25.0-beta.3",
 		"tlang": "~feature/comments",
-		"niknaks": ">=0.15.4"
+		"niknaks": ">=0.16.0"
 	},
 	"description": "Tristan Programming Language package manager",
 	"license": "GPL v3",
