@@ -169,3 +169,35 @@ struct DocGenCommand
         
     }
 }
+
+private mixin template RequiresConfig()
+{
+    @ArgNamed("config", "Path to the package manager configuration")
+    @(ArgConfig.optional)
+    string config = "~/.tpkg/config.json";
+}
+import tpkg.lib.manager;
+import niknaks.functional : Optional;
+import tpkg.lib.pack : Package;
+
+@Command("search", "Search for a package")
+struct SearchCommand
+{
+    mixin RequiresConfig!();
+
+    @ArgPositional("search term", "The regular expression to search by")
+    string regex;
+
+    void onExecute()
+    {
+        PackageManager pman = PackageManager.fromConfiguration(config);
+
+        // TODO: This should return a list in actuality
+        Optional!(Package) res = pman.search(regex);
+
+        if(res.isEmpty())
+        {
+            ERROR(format("No packages found with search term '%s'", regex));
+        }
+    }
+}
