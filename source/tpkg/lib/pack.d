@@ -22,6 +22,16 @@ public class Package
     private string name;
     private Version ver;
     private Package[] dependencies;
+
+    this(string name)
+    {
+        this.name = name;
+    }
+
+    public string getName()
+    {
+        return this.name;
+    }
 }
 
 
