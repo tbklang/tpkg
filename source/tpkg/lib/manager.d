@@ -9,25 +9,68 @@ import niknaks.functional : Optional;
 import std.string : format;
 import tpkg.lib.exceptions;
 
+import std.file : isDir, isFile, exists;
+import std.path : expandTilde;
+
 /** 
  * A package manager which
  * can resolve dependencies
  */
 public class PackageManager
 {
+    public static PackageManager fromConfiguration(string configPath)
+    {
+        configPath = expandTilde(configPath);
+
+        if(!exists(configPath))
+        {
+            throw new TPkgException(format("The path to the package manager configuration at '%s' does not exist", configPath));
+        }
+        else if(!isFile(configPath))
+        {
+            throw new TPkgException(format("The path to the package manager configuration at '%s' does not refer to a file", configPath));
+        }
+
+        PackageManager pman = new PackageManager();
+
+        import std.json;
+        import std.stdio;
+        import std.exception : ErrnoException;
+        try
+        {
+            File configFile;
+            configFile.open(configPath, "rb");
+            byte[] data;
+            data.length = configFile.size();
+            data = configFile.rawRead(data);
+            configFile.close();
+            JSONValue config = parseJSON(cast(string)data);
+
+            // TODO: Add sources here
+        }
+        catch(ErrnoException e)
+        {
+            throw new TPkgException(format("Error reading the config file: %s", e.msg));
+        }
+        catch(JSONException e)
+        {
+            throw new TPkgException(format("Error parsing the JSON config: %s", e.msg));
+        }
+
+        return pman;
+    }
+
     private SList!(Source) sources;
 
     private string storePath;
 
     this()
     {
-        import std.path : expandTilde;
         this(expandTilde("~/.tpkg"));        
     }
 
     this(string storePath)
     {
-        import std.file : isDir, exists;
         if(!exists(storePath))
         {
             throw new TPkgException(format("Invalid store path '%s': Path does not exist", storePath));
