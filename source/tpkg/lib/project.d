@@ -84,9 +84,17 @@ public struct Project
     {
         JSONValue root;
 
+        import std.string : toLower;
+        import std.conv : to;
         root["name"] = this.name;
         root["description"] = this.description;
         root["dependencies"] = this.dependencies;
+        root["type"] = toLower(to!(string)(this.type));
+
+        if(this.type == ProjectType.APPLICATION)
+        {
+            root["entrypoint"] = this.entrypoint;
+        }
 
         DEBUG(format("Serialized to: %s ", root));
 
@@ -189,6 +197,7 @@ unittest
 
     proj.setName("tpkg");
     proj.setDescription("The TLang package manager");
+    proj.setType(ProjectType.APPLICATION);
 
     JSONValue json = proj.serialize();
 
@@ -197,4 +206,5 @@ unittest
     
     assert(proj.getName() == projOut.getName());
     assert(proj.getDescription() == projOut.getDescription());
+    assert(proj.getType() == ProjectType.APPLICATION);
 }
