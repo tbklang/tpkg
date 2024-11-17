@@ -142,6 +142,20 @@ public class PackageManager
         {
             ZipArchive zar = new ZipArchive(data);
             ArchiveMember[string] ents = zar.directory();
+
+            ArchiveMember* descr = "t.pkg" in ents;
+            if(descr is null)
+            {
+                throw new TPkgException
+                (
+                    format
+                    (
+                        "Could not find a package descriptor within the package archive for %s",
+                        p.getName()
+                    )
+                );
+            }
+
             foreach(string ent; ents.keys())
             {
                 DEBUG(format("Found entry '%s'", ent));
