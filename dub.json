@@ -6,8 +6,9 @@
 	"dependencies": {
 		"gogga": ">=3.1.1",
 		"jcli": "0.25.0-beta.3",
-		"tlang": "~feature/comments",
-		"niknaks": ">=0.20.0"
+		"niknaks": ">=0.20.0",
+		"progress": "~>5.0.2",
+		"tlang": "~feature/comments"
 	},
 	"description": "Tristan Programming Language package manager",
 	"license": "GPL v3",
