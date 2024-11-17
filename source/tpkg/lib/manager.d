@@ -93,6 +93,75 @@ public class PackageManager
         this.sources.linearRemoveElement(src);
     }
 
+    /** 
+     * Fetches the package and stores
+     * it in the package store
+     *
+     * Params:
+     *   p = the package
+     * Throws: 
+     *   TPkgException on error fetching
+     * the provided package
+     */
+    public void fetch(Package p)
+    {
+        Source s = p.getSource();
+        ubyte[] data = s.fetch(p); // TODO: Callback for progress of fetching
+        DEBUG(format("Retrieved archive of %d bytes", data.length));
+
+        import std.uuid : randomUUID;
+        string name = randomUUID().toString();
+        // FIXME: For windows this should be a valid path
+        string path = format("/tmp/%s.zip", name);
+        import std.exception : ErrnoException;
+        try
+        {
+            import std.stdio : File;
+            File ar_f;
+            ar_f.open(path, "wb");
+            ar_f.rawWrite(data);
+            ar_f.close();
+        }
+        catch(ErrnoException e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error saving package archive for %s to '%s': %s",
+                    p,
+                    path,
+                    e
+                )
+            );
+        }
+        
+
+        import std.zip : ZipArchive, ZipException, ArchiveMember;
+        try
+        {
+            ZipArchive zar = new ZipArchive(data);
+            ArchiveMember[string] ents = zar.directory();
+            foreach(string ent; ents.keys())
+            {
+                DEBUG(format("Found entry '%s'", ent));
+            }
+            // zar.
+        }
+        catch(ZipException e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error opening package archive for %s: %s",
+                    p,
+                    e
+                )
+            );
+        }
+    }
+
     public Optional!(Package) search(string regex)
     {
         // TODO: Return a list of candidates in future
@@ -130,6 +199,8 @@ public class PackageManager
 
 import tpkg.lib.pack : Package, Version;
 
+public alias ProgressCallback = void delegate(ubyte[] got, size_t total);
+
 public abstract class Source
 {
     protected string uri;
@@ -140,6 +211,59 @@ public abstract class Source
     }
 
     public abstract bool searchPackages(string regex, ref Package[] found);
+
+    public final ubyte[] fetch(Package p)
+    {
+        size_t got = 0;
+        ubyte[] data;
+        import progress; // TODO: Switch out to `niknaks.progress` (which I need to code)
+        Bar b;
+        void testProg(ubyte[] d, size_t total)
+        {
+            if(b is null)
+            {
+                b = new Bar();
+                b.max = total;
+                string m()
+                {
+                    return p.getName();
+                }
+                b.message = &m;
+            }
+
+            data ~= d;
+            size_t amount = d.length;
+            b.next(amount);
+            got += amount;
+            if(got == total)
+            {
+                b.finish();
+            }
+        }
+
+        try
+        {
+            DEBUG(format("Fetching %s...", p));
+            fetchImpl(p, &testProg);
+            
+            return data;
+        }
+        catch(Exception e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error whilst fetching '%s' from source %s: %s",
+                    p,
+                    this,
+                    e.msg
+                )
+            );
+        }
+    }
+
+    protected abstract void fetchImpl(Package p, ProgressCallback onProgress);
 }
 
 // public struct Source
@@ -169,9 +293,14 @@ version(unittest)
     {
         import std.regex;
         private Package[] dummyEntries;
-        this(Package[] dummyEntries)
+
+        this()
         {
             super("dummy://");
+        }
+
+        public void setEntries(Package[] dummyEntries)
+        {
             this.dummyEntries = dummyEntries;
         }
 
@@ -192,6 +321,25 @@ version(unittest)
 
             return cast(bool)found.length;
         }
+
+        public override void fetchImpl(Package p, ProgressCallback clk)
+        {
+            // TODO: Set timeout on both requests
+            size_t chunkSize = 100;
+            import std.net.curl : get, AutoProtocol, byChunk, byChunkAsync, HTTP;
+            HTTP cl = HTTP("https://deavmi.assigned.network/git/tlang/tlang/archive/master.zip");
+            cl.method(HTTP.Method.head);
+            cl.perform();
+            string[string] hdrs = cl.responseHeaders();
+            DEBUG("Performed head:", hdrs);
+            import std.conv : to;
+            size_t len = to!(size_t)(hdrs["content-length"]);
+
+            foreach(ubyte[] c; byChunkAsync("https://deavmi.assigned.network/git/tlang/tlang/archive/master.zip", chunkSize))
+            {
+                clk(c, len);
+            }
+        }
     }
 }
 
@@ -199,8 +347,9 @@ unittest
 {
     PackageManager manager = new PackageManager();
 
-    Package[] bogus = [new Package("tshell")];
-    DummySource src = new DummySource(bogus);
+    DummySource src = new DummySource();
+    Package[] bogus = [new Package(src, "tshell")];
+    src.setEntries(bogus);
     manager.addSource(src);
 
     Optional!(Package) res = manager.search("tsh*");
@@ -208,4 +357,6 @@ unittest
     Package res_p = res.get();
     assert(res_p);
     assert(res_p.getName() == "tshell");
+
+    manager.fetch(res_p);
 }
