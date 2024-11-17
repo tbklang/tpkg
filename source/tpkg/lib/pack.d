@@ -8,6 +8,8 @@ public interface Version
     public string repr();
 }
 
+import tpkg.lib.manager : Source;
+
 // This would be a package entry,
 // with a name, version and list
 // of dependencies
@@ -19,18 +21,26 @@ public interface Version
 // also their dependencies
 public class Package
 {
+    private Source from;
     private string name;
     private Version ver;
     private Package[] dependencies;
 
-    this(string name)
+    this(Source from, string name)
     {
+        assert(from);
+        this.from = from;
         this.name = name;
     }
 
     public string getName()
     {
         return this.name;
+    }
+
+    public Source getSource()
+    {
+        return this.from;
     }
 }
 
