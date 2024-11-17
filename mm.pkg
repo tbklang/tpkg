@@ -1,7 +1,0 @@
-{
-	"name": "MyProj",
-	"description": "A basic project",
-	"type": "application",
-	"entrypoint": "../code/source/tlang/testing/modules/a.t"
-	
-}
