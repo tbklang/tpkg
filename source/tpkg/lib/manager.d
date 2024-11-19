@@ -123,16 +123,16 @@ public class PackageManager
         try
         {
             // clean up old package data (TODO: might want to version check prior to doing this)
-            import std.file : rmdirRecurse, exists, isDir;
+            import std.file : rmdirRecurse, exists, isDir, timeLastModified;
 
-            if(exists(base))
+            string packDir = buildPath(this.storePath, name);
+            if(exists(packDir))
             {
-                rmdirRecurse(base);
+                auto t_mod = timeLastModified(packDir);
+                WARN(format("Found old directory for %s last modified at %s, removing...", name, t_mod));
+                rmdirRecurse(packDir);
             }
             
-
-            
-
             
             foreach(string m; ms.keys())
             {
