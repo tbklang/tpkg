@@ -189,6 +189,22 @@ public struct Project
 
         return true;
     }
+
+    import niknaks.functional : Result, ok, error;
+
+    public static Result!(Project, Exception) deserialize(string jsonText)
+    {
+        try
+        {
+            Project proj;
+            deserialize(parseJSON(jsonText), proj);
+            return ok!(Project, Exception)(proj);
+        }
+        catch(JSONException e)
+        {
+            return error!(Exception, Project)(e);
+        }
+    }
 }
 
 unittest
