@@ -135,15 +135,66 @@ public class PackageManager
                 )
             );
         }
-        
 
         import std.zip : ZipArchive, ZipException, ArchiveMember;
+        
+        bool isRoot(string name)
+        {
+            import std.string : split;
+            string[] c = split(name, "/");
+            return c.length == 2 ? c[1].length == 0 : false;
+        }
+
+        import niknaks.arrays : filter;
+        import niknaks.functional : Predicate, predicateOf;
+
+        bool hasOnlyRoot(ArchiveMember[string] m)
+        {
+            string[] o;
+            filter!(string)(m.keys(), predicateOf!(isRoot), o);
+            DEBUG(o);
+            return o.length == 1;
+        }
+        
+
+        import std.json : JSONException;
         try
         {
             ZipArchive zar = new ZipArchive(data);
             ArchiveMember[string] ents = zar.directory();
+            version(unittest)
+            {
+                foreach(string ent; ents.keys())
+                {
+                    DEBUG(format("Found entry '%s'", ent));
+                }
+            }
 
-            ArchiveMember* descr = "t.pkg" in ents;
+            string descrPath;
+
+            // If single directory then it should match that of
+            if(hasOnlyRoot(ents))
+            {
+                descrPath = format("%s/t.pkg", p.getName());
+            }
+            // If the archive is empty
+            else if(ents.length == 0)
+            {
+                throw new TPkgException
+                (
+                    format
+                    (
+                        "Package archive is empty"
+                    )
+                );
+            }
+            
+            DEBUG("descrPath (before):", descrPath);
+            descrPath = descrPath.length ? descrPath : "t.pkg";
+            DEBUG("descrPath (after):", descrPath);
+            ArchiveMember* descr = descrPath in ents;
+
+            // Is there a `t.pkg`
             if(descr is null)
             {
                 throw new TPkgException
@@ -156,11 +207,26 @@ public class PackageManager
                 );
             }
 
-            foreach(string ent; ents.keys())
+            import std.json : JSONValue, parseJSON;
+            DEBUG(zar.expand(*descr));
+            ubyte[] descr_d = descr.expandedData();
+            JSONValue j = parseJSON(cast(string)descr_d);
+            DEBUG("descr_d:", descr_d);
+            import tpkg.lib.project : Project;
+            Project p_d;
+            if(!Project.deserialize(j, p_d))
             {
-                DEBUG(format("Found entry '%s'", ent));
+                    throw new TPkgException
+                (
+                    format
+                    (
+                        "Malformed package descriptor %s",
+                        p
+                    )
+                );
             }
-            // zar.
+
+            DEBUG("Parsed to package descriptor: ", p_d);
         }
         catch(ZipException e)
         {
@@ -169,6 +235,18 @@ public class PackageManager
                 format
                 (
                     "Error opening package archive for %s: %s",
+                    p,
+                    e
+                )
+            );
+        }
+        catch(JSONException e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error parsing the package descriptor for %s: %s",
                     p,
                     e
                 )
