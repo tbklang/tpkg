@@ -93,6 +93,29 @@ public class PackageManager
         this.sources.linearRemoveElement(src);
     }
 
+    import std.zip;
+    import tpkg.lib.project : Project;
+    import std.stdio : File;
+    private void store(ZipArchive zar, Project p)
+    {
+        // TODO: use version to generate name
+        string name = p.getName();
+
+        string base = format("%s/", this.storePath);
+        DEBUG("base path: ", base);
+        
+        ArchiveMember[string] ms = zar.directory();
+        foreach(string m; ms.keys())
+        {
+            string m_path = format("%s/%s", base, m);
+            ubyte[] d = zar.expand(ms[m]);
+            File f;
+            f.open(m_path, "wb"); // TODO: Catch exceptions here
+            f.rawWrite(d);
+            f.close();
+        }
+    }
+
     /** 
      * Fetches the package and stores
      * it in the package store
@@ -112,7 +135,8 @@ public class PackageManager
         import std.uuid : randomUUID;
         string name = randomUUID().toString();
         // FIXME: For windows this should be a valid path
-        string path = format("/tmp/%s.zip", name);
+        import std.file : tempDir;
+        string path = format("%s/%s.zip", tempDir(), name);
         import std.exception : ErrnoException;
         try
         {
@@ -227,6 +251,9 @@ public class PackageManager
             }
 
             DEBUG("Parsed to package descriptor: ", p_d);
+
+            // TODO: Place into package store
+            store(zar, p_d);
         }
         catch(ZipException e)
         {
