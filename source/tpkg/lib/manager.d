@@ -357,18 +357,6 @@ public class PackageManager
                 )
             );
         }
-        catch(JSONException e)
-        {
-            throw new TPkgException
-            (
-                format
-                (
-                    "Error parsing the package descriptor for %s: %s",
-                    p,
-                    e
-                )
-            );
-        }
     }
 
     public Optional!(Package) search(string regex)
