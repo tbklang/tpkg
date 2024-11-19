@@ -101,6 +101,26 @@ public class PackageManager
     import std.string : format;
     import std.path : buildPath, pathSplitter;
 
+    private struct StoreRef
+    {
+        private string packDir;
+        
+        this(string packDir)
+        {
+            this.packDir = packDir;
+        }
+
+        public string getPackDir()
+        {
+            return this.packDir;
+        }
+
+        public string getDescrPath()
+        {
+            return buildPath(this.packDir, "t.pkg");
+        }
+    }
+
     /** 
      * Unpacks the given package archive
      * into the data store
@@ -108,8 +128,9 @@ public class PackageManager
      * Params:
      *   zar = the package archive
      *   name = the project's name
+     * Returns: a storage descriptor
      */
-    private void store(ZipArchive zar, string name)
+    private StoreRef store(ZipArchive zar, string name)
     {
         ArchiveMember[string] ms = zar.directory();
         bool ignoreRootName = (format("%s/", name) in ms) !is null;
@@ -118,14 +139,14 @@ public class PackageManager
         auto base = ignoreRootName ? buildPath(this.storePath) : buildPath(this.storePath, name);
         DEBUG(format("Storage path for %s: '%s'", name, base));
         
+        string packDir = buildPath(this.storePath, name);
+
         File f;
 
         try
         {
             // clean up old package data (TODO: might want to version check prior to doing this)
             import std.file : rmdirRecurse, exists, isDir, timeLastModified;
-
-            string packDir = buildPath(this.storePath, name);
             if(exists(packDir))
             {
                 auto t_mod = timeLastModified(packDir);
@@ -133,7 +154,7 @@ public class PackageManager
                 rmdirRecurse(packDir);
             }
             
-            
+
             foreach(string m; ms.keys())
             {
                 import std.string : endsWith;
@@ -198,6 +219,48 @@ public class PackageManager
                 )
             );
         }
+
+
+        return StoreRef(packDir);
+    }
+
+    import niknaks.functional : Result;
+
+    public Result!(Project, Exception) lookup(string name)
+    {
+        return lookup0(buildPath(this.storePath, name~".tpkg"));
+    }
+
+    private Result!(Project, Exception) lookup0(string descriptorPath)
+    {
+        File f_descr;
+        scope(exit)
+        {
+            f_descr.close();
+        }
+        string descr;
+        try
+        {
+            f_descr.open(descriptorPath);
+            ubyte[] data;
+            data.length = f_descr.size();
+            data = f_descr.rawRead(data);
+            descr = cast(string)data;
+        }
+        catch(ErrnoException e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error reading the project descriptor at '%s': %s",
+                    f_descr.name(),
+                    e
+                )
+            );
+        }
+
+        return Project.deserialize(descr);
     }
 
     /** 
@@ -254,66 +317,33 @@ public class PackageManager
                 }
             }
 
-            string descrPath;
+            // Unpack the archive into the data store
+            auto s_ref = store(zar, p.getName());
+            DEBUG(s_ref);
 
-            // If single directory then it should match that of
-            if(hasOnlyRoot(ents))
-            {
-                descrPath = format("%s/t.pkg", p.getName());
-            }
-            // If the archive is empty
-            else if(ents.length == 0)
-            {
-                throw new TPkgException
-                (
-                    format
-                    (
-                        "Package archive is empty"
-                    )
-                );
-            }
-            
-            DEBUG("descrPath (before):", descrPath);
-            descrPath = descrPath.length ? descrPath : "t.pkg";
-            DEBUG("descrPath (after):", descrPath);
-            ArchiveMember* descr = descrPath in ents;
+            // Process fetched package?
+            auto l_res = lookup0(s_ref.getDescrPath());
+            DEBUG(l_res.is_okay());
 
-            // Is there a `t.pkg`
-            if(descr is null)
+            if(l_res.is_error())
             {
                 throw new TPkgException
                 (
                     format
                     (
-                        "Could not find a package descriptor within the package archive for %s",
-                        p.getName()
+                        "There was an error validating package %s: %s",
+                        p.getName(),
+                        l_res.error().msg
                     )
                 );
             }
-
-            import std.json : JSONValue, parseJSON;
-            DEBUG(zar.expand(*descr));
-            ubyte[] descr_d = descr.expandedData();
-            JSONValue j = parseJSON(cast(string)descr_d);
-            DEBUG("descr_d:", descr_d);
-            import tpkg.lib.project : Project;
-            Project p_d;
-            if(!Project.deserialize(j, p_d))
+            else
             {
-                    throw new TPkgException
-                (
-                    format
-                    (
-                        "Malformed package descriptor %s",
-                        p
-                    )
-                );
-            }
-
-            DEBUG("Parsed to package descriptor: ", p_d);
-
-            // TODO: Place into package store
-            store(zar, p.getName());
+                version(unittest)
+                {
+                    DEBUG(l_res.ok());
+                }
+            }            
         }
         catch(ZipException e)
         {
