@@ -11,6 +11,8 @@ import tpkg.lib.exceptions;
 
 import std.file : isDir, isFile, exists;
 import std.path : expandTilde;
+import std.exception : ErrnoException;
+import std.file : FileException;
 
 /** 
  * A package manager which
@@ -96,23 +98,89 @@ public class PackageManager
     import std.zip;
     import tpkg.lib.project : Project;
     import std.stdio : File;
+    import std.string : format;
+
+
     private void store(ZipArchive zar, Project p)
     {
         // TODO: use version to generate name
         string name = p.getName();
 
-        string base = format("%s/", this.storePath);
+        import std.path : buildPath, pathSplitter;
+        auto base = buildPath(this.storePath);
+
+        // string base = format("%s/", this.storePath);
         DEBUG("base path: ", base);
-        
-        ArchiveMember[string] ms = zar.directory();
-        foreach(string m; ms.keys())
+
+        File f;
+
+        try
         {
-            string m_path = format("%s/%s", base, m);
-            ubyte[] d = zar.expand(ms[m]);
-            File f;
-            f.open(m_path, "wb"); // TODO: Catch exceptions here
-            f.rawWrite(d);
-            f.close();
+        
+            ArchiveMember[string] ms = zar.directory();
+            foreach(string m; ms.keys())
+            {
+                import std.string : endsWith;
+                // Skip any directory-type entries
+                if(endsWith(m, "/"))
+                {
+                    DEBUG(format("Skipping entry '%s' that is just a directory", m));
+                    continue;
+                }
+
+                scope(exit)
+                {
+                    f.close();
+                }
+
+                ArchiveMember m_ent = ms[m];
+                string m_path = buildPath(base, m);
+                DEBUG("m_path:", m_path);
+
+                
+                if(!endsWith(m_path, "/")) // if it doesn't end in that, then recursively
+                // create directories all the way up-to-but-not-including the entry itself
+                // (last one must be a file with no trailing `/`)
+                {
+                    auto ps = pathSplitter(m_path);
+                    ps.popBack();
+                    string g = buildPath(ps);
+                    DEBUG(format("Creating directory '%s' recursively...", g));
+                    import std.file : mkdirRecurse;
+                    mkdirRecurse(g);
+                }
+
+                DEBUG("m_path:", m_path);
+                ubyte[] d = zar.expand(m_ent);
+                
+                f.open(m_path, "wb"); // TODO: Catch exceptions here
+                f.rawWrite(d);
+            }
+        }
+        catch(ErrnoException e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error writing file '%s' to disk when unpacking for %s: %s",
+                    f.name(),
+                    p.getName(),
+                    e
+                )
+            );
+        }
+        catch(FileException e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error creating directory during unpack for %s: %s",
+                    p.getName(),
+                    e
+                )
+            );
         }
     }
 
@@ -137,7 +205,7 @@ public class PackageManager
         // FIXME: For windows this should be a valid path
         import std.file : tempDir;
         string path = format("%s/%s.zip", tempDir(), name);
-        import std.exception : ErrnoException;
+
         try
         {
             import std.stdio : File;
