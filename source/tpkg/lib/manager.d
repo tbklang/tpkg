@@ -99,7 +99,7 @@ public class PackageManager
     import tpkg.lib.project : Project;
     import std.stdio : File;
     import std.string : format;
-
+    import std.path : buildPath, pathSplitter;
 
     /** 
      * Unpacks the given package archive
@@ -113,8 +113,7 @@ public class PackageManager
         ArchiveMember[string] ms = zar.directory();
         bool ignoreRootName = (format("%s/", p.getName()) in ms) !is null;
         DEBUG("ignoreRootName:", ignoreRootName);
-
-        import std.path : buildPath, pathSplitter;
+        
         auto base = ignoreRootName ? buildPath(this.storePath) : buildPath(this.storePath, p.getName());
         DEBUG(format("Storage path for %s: '%s'", p.getName(), base));
         
@@ -219,30 +218,6 @@ public class PackageManager
         import std.uuid : randomUUID;
         string name = randomUUID().toString();
         // FIXME: For windows this should be a valid path
-        import std.file : tempDir;
-        string path = format("%s/%s.zip", tempDir(), name);
-
-        try
-        {
-            import std.stdio : File;
-            File ar_f;
-            ar_f.open(path, "wb");
-            ar_f.rawWrite(data);
-            ar_f.close();
-        }
-        catch(ErrnoException e)
-        {
-            throw new TPkgException
-            (
-                format
-                (
-                    "Error saving package archive for %s to '%s': %s",
-                    p,
-                    path,
-                    e
-                )
-            );
-        }
 
         import std.zip : ZipArchive, ZipException, ArchiveMember;
         
