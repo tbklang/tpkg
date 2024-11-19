@@ -101,23 +101,39 @@ public class PackageManager
     import std.string : format;
 
 
+    /** 
+     * Unpacks the given package archive
+     * into the data store
+     * Params:
+     *   zar = the package archive
+     *   p = the project metadata
+     */
     private void store(ZipArchive zar, Project p)
     {
-        // TODO: use version to generate name
-        string name = p.getName();
+        ArchiveMember[string] ms = zar.directory();
+        bool ignoreRootName = (format("%s/", p.getName()) in ms) !is null;
+        DEBUG("ignoreRootName:", ignoreRootName);
 
         import std.path : buildPath, pathSplitter;
-        auto base = buildPath(this.storePath);
-
-        // string base = format("%s/", this.storePath);
-        DEBUG("base path: ", base);
-
+        auto base = ignoreRootName ? buildPath(this.storePath) : buildPath(this.storePath, p.getName());
+        DEBUG(format("Storage path for %s: '%s'", p.getName(), base));
+        
         File f;
 
         try
         {
-        
-            ArchiveMember[string] ms = zar.directory();
+            // clean up old package data (TODO: might want to version check prior to doing this)
+            import std.file : rmdirRecurse, exists, isDir;
+
+            if(exists(base))
+            {
+                rmdirRecurse(base);
+            }
+            
+
+            
+
+            
             foreach(string m; ms.keys())
             {
                 import std.string : endsWith;
