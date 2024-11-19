@@ -104,18 +104,19 @@ public class PackageManager
     /** 
      * Unpacks the given package archive
      * into the data store
+     *
      * Params:
      *   zar = the package archive
-     *   p = the project metadata
+     *   name = the project's name
      */
-    private void store(ZipArchive zar, Project p)
+    private void store(ZipArchive zar, string name)
     {
         ArchiveMember[string] ms = zar.directory();
-        bool ignoreRootName = (format("%s/", p.getName()) in ms) !is null;
+        bool ignoreRootName = (format("%s/", name) in ms) !is null;
         DEBUG("ignoreRootName:", ignoreRootName);
         
-        auto base = ignoreRootName ? buildPath(this.storePath) : buildPath(this.storePath, p.getName());
-        DEBUG(format("Storage path for %s: '%s'", p.getName(), base));
+        auto base = ignoreRootName ? buildPath(this.storePath) : buildPath(this.storePath, name);
+        DEBUG(format("Storage path for %s: '%s'", name, base));
         
         File f;
 
@@ -180,7 +181,7 @@ public class PackageManager
                 (
                     "Error writing file '%s' to disk when unpacking for %s: %s",
                     f.name(),
-                    p.getName(),
+                    name,
                     e
                 )
             );
@@ -192,7 +193,7 @@ public class PackageManager
                 format
                 (
                     "Error creating directory during unpack for %s: %s",
-                    p.getName(),
+                    name,
                     e
                 )
             );
@@ -312,7 +313,7 @@ public class PackageManager
             DEBUG("Parsed to package descriptor: ", p_d);
 
             // TODO: Place into package store
-            store(zar, p_d);
+            store(zar, p.getName());
         }
         catch(ZipException e)
         {
