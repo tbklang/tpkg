@@ -224,18 +224,18 @@ public class PackageManager
         return StoreRef(packDir);
     }
 
-    import niknaks.functional : Result, Optional;
+    import niknaks.functional : Result, Optional, ok, error;
 
-    public Optional!(Project) lookup(string name)
+    public Result!(Optional!(Project), string) lookup(string name)
     {
         return lookup0(buildPath(this.storePath, name~".tpkg"));
     }
 
-    private Optional!(Project) lookup0(string descriptorPath)
+    private Result!(Optional!(Project), string) lookup0(string descriptorPath)
     {
         if(!exists(descriptorPath))
         {
-            return Optional!(Project).empty();
+            return ok!(Optional!(Project), string)(Optional!(Project).empty());
         }
 
         File f_descr;
@@ -259,7 +259,7 @@ public class PackageManager
             auto res = Project.deserialize(json);
             if(res.is_error())
             {
-                throw new TPkgException
+                return error!(string, Optional!(Project))
                 (
                     format
                     (
@@ -270,11 +270,11 @@ public class PackageManager
                 );
             }
 
-            return Optional!(Project)(projOut);
+            return ok!(Optional!(Project), string)(Optional!(Project)(projOut));
         }
         catch(ErrnoException e)
         {
-            throw new TPkgException
+            return error!(string, Optional!(Project))
             (
                 format
                 (
@@ -286,7 +286,7 @@ public class PackageManager
         }
         catch(JSONException e)
         {
-            throw new TPkgException
+            return error!(string, Optional!(Project))
             (
                 format
                 (
@@ -365,7 +365,7 @@ public class PackageManager
             DEBUG(s_ref);
 
             // Validate package by looking it up
-            DEBUG(lookup0(s_ref.getDescrPath()));          
+            DEBUG(lookup0(s_ref.getDescrPath())); // TODO: If this fails then we should remove it from datastore
         }
         catch(ZipException e)
         {
