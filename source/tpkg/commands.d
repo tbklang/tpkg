@@ -17,9 +17,11 @@ import niknaks.arrays : unique;
 
 public Registry* reg;
 
+import niknaks.functional : Result, ok, error;
+
 private mixin template BaseFunctions()
 {
-    private bool openProject(string projectDirectory, ref Project proj)
+    private Result!(Project, string) openProject(string projectDirectory)
     {
         import std.stdio;
 
@@ -39,8 +41,7 @@ private mixin template BaseFunctions()
         }
         catch(ErrnoException e)
         {
-            ERROR(format("Could not open/read project descriptor at %s: %s", f.name(), e));
-            return false;
+            return error!(string, Project)(format("Could not open/read project descriptor at %s: %s", f.name(), e));
         }
 
         JSONValue json;
@@ -51,11 +52,10 @@ private mixin template BaseFunctions()
         }
         catch(JSONException e)
         {
-            ERROR(format("Could not parse project descriptor at %s: %s", f.name(), e));
-            return false;
+            return error!(string, Project)(format("Could not parse project descriptor at %s: %s", f.name(), e));
         }
         
-        return Project.deserialize(json, proj);
+        return Project.deserialize(json);
     }
 }
 
@@ -139,9 +139,11 @@ struct DocGenCommand
         DEBUG(format("Base project directory '%s'", directory));
         DEBUG(format("Output directory for docs '%s'", docDir));
 
-        Project proj;
-        if(openProject(directory, proj))
+        auto res = openProject(directory);
+        if(res.is_okay())
         {
+            Project proj = res.ok();
+
             string inputFilePath = proj.getEntrypoint();
             string sourceEntry = gibFileData(inputFilePath);
 
