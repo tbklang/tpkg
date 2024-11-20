@@ -280,7 +280,6 @@ public class PackageManager
             string descr = cast(string)data;
 
             JSONValue json = parseJSON(descr);
-            Project projOut;
             auto res = Project.deserialize(json);
             if(res.is_error())
             {
@@ -295,7 +294,7 @@ public class PackageManager
                 );
             }
 
-            return ok!(Project, string)(projOut);
+            return ok!(Project, string)(res.ok());
         }
         catch(ErrnoException e)
         {
@@ -350,7 +349,11 @@ public class PackageManager
 
     public void build(StoreRef sr)
     {
+        auto p_res = parse(sr);
+        // TODO: handle error
 
+        Project p = p_res.ok();
+        DEBUG(p);
 
         // look
     }
