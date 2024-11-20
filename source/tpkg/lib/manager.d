@@ -224,28 +224,53 @@ public class PackageManager
         return StoreRef(packDir);
     }
 
-    import niknaks.functional : Result;
+    import niknaks.functional : Result, Optional;
 
-    public Result!(Project, Exception) lookup(string name)
+    public Optional!(Project) lookup(string name)
     {
         return lookup0(buildPath(this.storePath, name~".tpkg"));
     }
 
-    private Result!(Project, Exception) lookup0(string descriptorPath)
+    private Optional!(Project) lookup0(string descriptorPath)
     {
+        if(!exists(descriptorPath))
+        {
+            return Optional!(Project).empty();
+        }
+
         File f_descr;
         scope(exit)
         {
             f_descr.close();
         }
-        string descr;
+
+        import std.json : JSONValue, parseJSON, JSONException;
+
         try
         {
             f_descr.open(descriptorPath);
             ubyte[] data;
             data.length = f_descr.size();
             data = f_descr.rawRead(data);
-            descr = cast(string)data;
+            string descr = cast(string)data;
+
+            JSONValue json = parseJSON(descr);
+            Project projOut;
+            auto res = Project.deserialize(json);
+            if(res.is_error())
+            {
+                throw new TPkgException
+                (
+                    format
+                    (
+                        "Error validating the project descriptor at '%s': %s",
+                        f_descr.name(),
+                        res.error()
+                    )
+                );
+            }
+
+            return Optional!(Project)(projOut);
         }
         catch(ErrnoException e)
         {
@@ -259,8 +284,63 @@ public class PackageManager
                 )
             );
         }
+        catch(JSONException e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error parsing the project descriptor at '%s': %s",
+                    f_descr.name(),
+                    e
+                )
+            );
+        }
+    }
 
-        return Project.deserialize(descr);
+    // public Result!(Project, Exception) lookup(string name)
+    // {
+    //     return lookup0(buildPath(this.storePath, name~".tpkg"));
+    // }
+
+    // private Result!(Project, Exception) lookup0(string descriptorPath)
+    // {
+    //     File f_descr;
+    //     scope(exit)
+    //     {
+    //         f_descr.close();
+    //     }
+    //     string descr;
+    //     try
+    //     {
+    //         f_descr.open(descriptorPath);
+    //         ubyte[] data;
+    //         data.length = f_descr.size();
+    //         data = f_descr.rawRead(data);
+    //         descr = cast(string)data;
+    //     }
+    //     catch(ErrnoException e)
+    //     {
+    //         throw new TPkgException
+    //         (
+    //             format
+    //             (
+    //                 "Error reading the project descriptor at '%s': %s",
+    //                 f_descr.name(),
+    //                 e
+    //             )
+    //         );
+    //     }
+
+    //     return Project.deserialize(descr);
+    // }
+
+    public void build(Package p)
+    {
+        fetch(p); // fetch, store, parse+validate
+
+
+        // look
     }
 
     /** 
@@ -321,29 +401,8 @@ public class PackageManager
             auto s_ref = store(zar, p.getName());
             DEBUG(s_ref);
 
-            // Process fetched package?
-            auto l_res = lookup0(s_ref.getDescrPath());
-            DEBUG(l_res.is_okay());
-
-            if(l_res.is_error())
-            {
-                throw new TPkgException
-                (
-                    format
-                    (
-                        "There was an error validating package %s: %s",
-                        p.getName(),
-                        l_res.error().msg
-                    )
-                );
-            }
-            else
-            {
-                version(unittest)
-                {
-                    DEBUG(l_res.ok());
-                }
-            }            
+            // Validate package by looking it up
+            DEBUG(lookup0(s_ref.getDescrPath()));          
         }
         catch(ZipException e)
         {
