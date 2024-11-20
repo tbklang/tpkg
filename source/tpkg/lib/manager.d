@@ -228,7 +228,7 @@ public class PackageManager
 
     public Result!(Optional!(StoreRef), string) lookup(Package p)
     {
-        return lookup0(p.getName());
+        return lookup(p.getName());
     }
 
     public Result!(Optional!(StoreRef), string) lookup(string name)
@@ -243,7 +243,7 @@ public class PackageManager
         {
             if(!isDir(packDir))
             {
-                throw new TPkgException
+                return error!(string, Optional!(StoreRef))
                 (
                     format
                     (
@@ -256,6 +256,7 @@ public class PackageManager
         }
         else
         {
+            ERROR("sddd", packDir);
             return ok!(Optional!(StoreRef), string)(Optional!(StoreRef).empty());
         }
     }
@@ -347,10 +348,8 @@ public class PackageManager
 
     }
 
-    public void build(Package p)
+    public void build(StoreRef sr)
     {
-        auto l_res = lookup(p);
-        fetch(p); // fetch, store, parse+validate
 
 
         // look
@@ -622,5 +621,10 @@ unittest
 
     manager.fetch(res_p);
 
-    manager.build(res_p);
+    auto l_res = manager.lookup(res_p);
+    assert(l_res.is_okay());
+    auto l_res_opt = l_res.ok();
+    DEBUG(l_res_opt);
+    assert(l_res_opt.isPresent());
+    manager.build(l_res_opt.get());
 }
