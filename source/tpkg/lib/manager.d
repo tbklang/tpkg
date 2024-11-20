@@ -298,6 +298,31 @@ public class PackageManager
         }
     }
 
+    public void unstore(Package p)
+    {
+        string packDir = buildPath(this.storePath, p.getName());
+        DEBUG("Unstoring %s at pack dir '%s'...", p, packDir);
+
+        try
+        {
+            import std.file : rmdirRecurse;
+            rmdirRecurse(packDir);
+        }
+        catch(FileException e)
+        {
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error unstoring package %s: %s",
+                    p.getName(),
+                    e.message
+                )
+            );
+        }
+
+    }
+
     public void build(Package p)
     {
         fetch(p); // fetch, store, parse+validate
@@ -365,7 +390,24 @@ public class PackageManager
             DEBUG(s_ref);
 
             // Validate package by looking it up
-            DEBUG(lookup0(s_ref.getDescrPath())); // TODO: If this fails then we should remove it from datastore
+            auto l_res = lookup0(s_ref.getDescrPath());
+            if(l_res.is_error())
+            {
+                // Remove from store
+                unstore(p);
+
+                throw new TPkgException
+                (
+                    format
+                    (
+                        "Error validating package %s: %s",
+                        p.getName(),
+                        l_res.error()
+                    )
+                );
+            }
+
+            
         }
         catch(ZipException e)
         {
