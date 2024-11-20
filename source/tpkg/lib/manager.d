@@ -226,18 +226,42 @@ public class PackageManager
 
     import niknaks.functional : Result, Optional, ok, error;
 
-    public Result!(Optional!(Project), string) lookup(string name)
+    public Result!(Optional!(StoreRef), string) lookup(Package p)
     {
-        return lookup0(buildPath(this.storePath, name~".tpkg"));
+        return lookup0(p.getName());
     }
 
-    private Result!(Optional!(Project), string) lookup0(string descriptorPath)
+    public Result!(Optional!(StoreRef), string) lookup(string name)
     {
-        if(!exists(descriptorPath))
-        {
-            return ok!(Optional!(Project), string)(Optional!(Project).empty());
-        }
+        return lookup0(buildPath(this.storePath, name));
+    }
 
+    private Result!(Optional!(StoreRef), string) lookup0(string packDir)
+    {
+        // TODO: check if it is a file and then bail out with an error
+        if(exists(packDir))
+        {
+            if(!isDir(packDir))
+            {
+                throw new TPkgException
+                (
+                    format
+                    (
+                        "Failed to lookup, path '%s' does not refer to a directory",
+                        packDir
+                    )
+                );
+            }
+            return ok!(Optional!(StoreRef), string)(Optional!(StoreRef)(StoreRef(packDir)));
+        }
+        else
+        {
+            return ok!(Optional!(StoreRef), string)(Optional!(StoreRef).empty());
+        }
+    }
+
+    public Result!(Project, string) parse(StoreRef sr)
+    {
         File f_descr;
         scope(exit)
         {
@@ -248,7 +272,7 @@ public class PackageManager
 
         try
         {
-            f_descr.open(descriptorPath);
+            f_descr.open(sr.getDescrPath());
             ubyte[] data;
             data.length = f_descr.size();
             data = f_descr.rawRead(data);
@@ -259,40 +283,40 @@ public class PackageManager
             auto res = Project.deserialize(json);
             if(res.is_error())
             {
-                return error!(string, Optional!(Project))
+                return error!(string, Project)
                 (
                     format
                     (
                         "Error validating the project descriptor at '%s': %s",
-                        f_descr.name(),
+                        sr.getPackDir(),
                         res.error()
                     )
                 );
             }
 
-            return ok!(Optional!(Project), string)(Optional!(Project)(projOut));
+            return ok!(Project, string)(projOut);
         }
         catch(ErrnoException e)
         {
-            return error!(string, Optional!(Project))
+            return error!(string, Project)
             (
                 format
                 (
                     "Error reading the project descriptor at '%s': %s",
-                    f_descr.name(),
-                    e
+                    sr.getPackDir(),
+                    e.message
                 )
             );
         }
         catch(JSONException e)
         {
-            return error!(string, Optional!(Project))
+            return error!(string, Project)
             (
                 format
                 (
                     "Error parsing the project descriptor at '%s': %s",
-                    f_descr.name(),
-                    e
+                    sr.getPackDir(),
+                    e.message
                 )
             );
         }
@@ -325,6 +349,7 @@ public class PackageManager
 
     public void build(Package p)
     {
+        auto l_res = lookup(p);
         fetch(p); // fetch, store, parse+validate
 
 
@@ -339,7 +364,8 @@ public class PackageManager
      *   p = the package
      * Throws: 
      *   TPkgException on error fetching
-     * the provided package
+     * the provided package or validating
+     * it
      */
     public void fetch(Package p)
     {
@@ -365,8 +391,9 @@ public class PackageManager
             auto s_ref = store(zar, p.getName());
             DEBUG(s_ref);
 
-            // Validate package by looking it up
-            auto l_res = lookup0(s_ref.getDescrPath());
+            // Validate package by attempting to
+            // parse it
+            auto l_res = parse(s_ref);
             if(l_res.is_error())
             {
                 // Remove from store
@@ -382,8 +409,6 @@ public class PackageManager
                     )
                 );
             }
-
-            
         }
         catch(ZipException e)
         {
@@ -596,4 +621,6 @@ unittest
     assert(res_p.getName() == "tshell");
 
     manager.fetch(res_p);
+
+    manager.build(res_p);
 }
