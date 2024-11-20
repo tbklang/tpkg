@@ -347,32 +347,8 @@ public class PackageManager
         ubyte[] data = s.fetch(p); // TODO: Callback for progress of fetching
         DEBUG(format("Retrieved archive of %d bytes", data.length));
 
-        import std.uuid : randomUUID;
-        string name = randomUUID().toString();
-        // FIXME: For windows this should be a valid path
-
         import std.zip : ZipArchive, ZipException, ArchiveMember;
         
-        bool isRoot(string name)
-        {
-            import std.string : split;
-            string[] c = split(name, "/");
-            return c.length == 2 ? c[1].length == 0 : false;
-        }
-
-        import niknaks.arrays : filter;
-        import niknaks.functional : Predicate, predicateOf;
-
-        bool hasOnlyRoot(ArchiveMember[string] m)
-        {
-            string[] o;
-            filter!(string)(m.keys(), predicateOf!(isRoot), o);
-            DEBUG(o);
-            return o.length == 1;
-        }
-        
-
-        import std.json : JSONException;
         try
         {
             ZipArchive zar = new ZipArchive(data);
