@@ -298,43 +298,6 @@ public class PackageManager
         }
     }
 
-    // public Result!(Project, Exception) lookup(string name)
-    // {
-    //     return lookup0(buildPath(this.storePath, name~".tpkg"));
-    // }
-
-    // private Result!(Project, Exception) lookup0(string descriptorPath)
-    // {
-    //     File f_descr;
-    //     scope(exit)
-    //     {
-    //         f_descr.close();
-    //     }
-    //     string descr;
-    //     try
-    //     {
-    //         f_descr.open(descriptorPath);
-    //         ubyte[] data;
-    //         data.length = f_descr.size();
-    //         data = f_descr.rawRead(data);
-    //         descr = cast(string)data;
-    //     }
-    //     catch(ErrnoException e)
-    //     {
-    //         throw new TPkgException
-    //         (
-    //             format
-    //             (
-    //                 "Error reading the project descriptor at '%s': %s",
-    //                 f_descr.name(),
-    //                 e
-    //             )
-    //         );
-    //     }
-
-    //     return Project.deserialize(descr);
-    // }
-
     public void build(Package p)
     {
         fetch(p); // fetch, store, parse+validate
