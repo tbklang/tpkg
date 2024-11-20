@@ -3,6 +3,7 @@ module tpkg.lib.project;
 import std.json;
 import tpkg.logging;
 import std.string : format;
+import niknaks.functional : Result, ok, error;
 
 public enum ProjectType
 {
@@ -101,19 +102,18 @@ public struct Project
         return root;
     }
 
-    // TODO: Must be defensively programmed
-    public static bool deserialize(JSONValue json, ref Project proj)
+    public static Result!(Project, string) deserialize(JSONValue json)
     {
+        Project proj;
+
         JSONValue* nameFieldPtr = "name" in json;
         if(nameFieldPtr is null)
         {
-            ERROR("Missing the 'name' field");
-            return false;
+            return error!(string, Project)("Missing the 'name' field");
         }
         else if(nameFieldPtr.type() != JSONType.string)
         {
-            ERROR("The 'name' field must be a string");
-            return false;
+            return error!(string, Project)("The 'name' field must be a string");
         }
 
         proj.setName(json["name"].str());
@@ -121,13 +121,11 @@ public struct Project
         JSONValue* descriptionFieldPtr = "description" in json;
         if(descriptionFieldPtr is null)
         {
-            ERROR("Missing the 'description' field");
-            return false;
+            return error!(string, Project)("Missing the 'description' field");
         }
         else if(descriptionFieldPtr.type() != JSONType.string)
         {
-            ERROR("The 'description' field must be a string");
-            return false;
+            return error!(string, Project)("The 'description' field must be a string");
         }
 
         proj.setDescription(json["description"].str());
@@ -135,13 +133,11 @@ public struct Project
         JSONValue* projectTypePtr = "type" in json;
         if(projectTypePtr is null)
         {
-            ERROR("Missing the 'type' field");
-            return false;
+            return error!(string, Project)("Missing the 'type' field");
         }
         else if(projectTypePtr.type() != JSONType.string)
         {
-            ERROR("The 'type' field must be a string");
-            return false;
+            return error!(string, Project)("The 'type' field must be a string");
         }
 
         ProjectType projectType = getProjectType(json["type"].str());
@@ -157,13 +153,11 @@ public struct Project
             JSONValue* entrypointPtr = "entrypoint" in json;
             if(entrypointPtr is null)
             {
-                ERROR("When using the application project type there must be an 'entrypoint' field");
-                return false;
+                return error!(string, Project)("When using the application project type there must be an 'entrypoint' field");
             }
             else if(entrypointPtr.type() != JSONType.string)
             {
-                ERROR("The 'entrypoint' field must be a string");
-                return false;
+                return error!(string, Project)("The 'entrypoint' field must be a string");
             }
 
             proj.setEntrypoint(json["entrypoint"].str());
@@ -181,30 +175,13 @@ public struct Project
                 }
                 else
                 {
-                    ERROR(format("A dependency must be a string not a '%s'", arrElem.type()));
-                    return false;
+                    return error!(string, Project)(format("A dependency must be a string not a '%s'", arrElem.type()));
                 }
             }
         }
 
-        return true;
-    }
-
-    import niknaks.functional : Result, ok, error;
-
-    public static Result!(Project, Exception) deserialize(string jsonText)
-    {
-        try
-        {
-            Project proj;
-            deserialize(parseJSON(jsonText), proj);
-            return ok!(Project, Exception)(proj);
-        }
-        catch(JSONException e)
-        {
-            return error!(Exception, Project)(e);
-        }
-    }
+        return ok!(Project, string)(proj);
+    }   
 }
 
 unittest
@@ -218,7 +195,9 @@ unittest
     JSONValue json = proj.serialize();
 
     Project projOut;
-    assert(proj.deserialize(json, projOut));
+    auto res = proj.deserialize(json);
+    assert(res.is_okay());
+    projOut = res.ok();
     
     assert(proj.getName() == projOut.getName());
     assert(proj.getDescription() == projOut.getDescription());
