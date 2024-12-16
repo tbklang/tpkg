@@ -347,6 +347,13 @@ public class PackageManager
 
     }
 
+    /** 
+     * Builds the package at the given
+     * storage referenece
+     *
+     * Params:
+     *   sr = the `StoreRef`
+     */
     public void build(StoreRef sr)
     {
         auto p_res = parse(sr);
@@ -355,13 +362,8 @@ public class PackageManager
         Project p = p_res.ok();
         DEBUG(p);
 
-        DEBUG("packdir: ", sr.getPackDir());
-        string e = p.getEntrypoint();
-        DEBUG("entrypoint:", e);
-
-        import std.path : buildPath;
         string e_path = buildPath(sr.getPackDir(), p.getEntrypoint());
-        DEBUG("e_path:", e_path);
+        DEBUG("Opening entrypoint file at '", e_path, "'...");
 
         import tlang.compiler.core : Compiler, forFile;
         Result!(Compiler, Exception) c_res = forFile(e_path);
@@ -373,12 +375,7 @@ public class PackageManager
         }
 
         Compiler c = c_res.ok();
-        DEBUG("Begin compilation...");
         c.compile();
-
-        DEBUG("BUJDFHFKHDJKHDKJSHJK");
-
-        // look
     }
 
     /** 
