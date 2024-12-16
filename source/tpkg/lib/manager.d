@@ -355,6 +355,29 @@ public class PackageManager
         Project p = p_res.ok();
         DEBUG(p);
 
+        DEBUG("packdir: ", sr.getPackDir());
+        string e = p.getEntrypoint();
+        DEBUG("entrypoint:", e);
+
+        import std.path : buildPath;
+        string e_path = buildPath(sr.getPackDir(), p.getEntrypoint());
+        DEBUG("e_path:", e_path);
+
+        import tlang.compiler.core : Compiler, forFile;
+        Result!(Compiler, Exception) c_res = forFile(e_path);
+
+        if(c_res.is_error())
+        {
+            // TODO: Handle this
+            return;
+        }
+
+        Compiler c = c_res.ok();
+        DEBUG("Begin compilation...");
+        c.compile();
+
+        DEBUG("BUJDFHFKHDJKHDKJSHJK");
+
         // look
     }
 
