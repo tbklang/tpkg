@@ -19,3 +19,8 @@ dub.selections.json
 # Outputs from unittests and manual testing
 out/
 doc/
+
+
+# Outputs from calling `build(StoreRef)`
+*.c
+*.o
