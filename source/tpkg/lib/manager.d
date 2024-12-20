@@ -365,7 +365,7 @@ public class PackageManager
         string e_path = buildPath(sr.getPackDir(), p.getEntrypoint());
         DEBUG("Opening entrypoint file at '", e_path, "'...");
 
-        import tlang.compiler.core : Compiler, forFile;
+        import tlang.compiler.core : Compiler, forFile, CompileResult;
         Result!(Compiler, Exception) c_res = forFile(e_path);
 
         if(c_res.is_error())
@@ -375,7 +375,10 @@ public class PackageManager
         }
 
         Compiler c = c_res.ok();
-        c.compile();
+        // TODO: Would be nice if this could return something, would need to update the `Compiler`
+        // ... API and also the `CodeEmitter` API (probably)
+        CompileResult cmp_res = c.compile(); // TODO: Alias as compilation rsult in core.compiler
+        INFO(format("Generated executable at '%s' in %d ms", cmp_res.createdFile, cmp_res.elapsedTime.total!("msecs")()));
     }
 
     /** 
