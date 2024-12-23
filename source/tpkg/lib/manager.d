@@ -631,7 +631,7 @@ version(unittest)
             // TODO: Set timeout on both requests
             size_t chunkSize = 100;
             import std.net.curl : get, AutoProtocol, byChunk, byChunkAsync, HTTP;
-            HTTP cl = HTTP("https://deavmi.assigned.network/git/deavmi/tshell/archive/master.zip");
+            HTTP cl = HTTP("https://deavmi.assigned.network/git/tlang/tshell/archive/master.zip");
             cl.method(HTTP.Method.head);
             cl.perform();
             string[string] hdrs = cl.responseHeaders();
@@ -639,7 +639,7 @@ version(unittest)
             import std.conv : to;
             size_t len = to!(size_t)(hdrs["content-length"]);
 
-            foreach(ubyte[] c; byChunkAsync("https://deavmi.assigned.network/git/deavmi/tshell/archive/master.zip", chunkSize))
+            foreach(ubyte[] c; byChunkAsync("https://deavmi.assigned.network/git/tlang/tshell/archive/master.zip", chunkSize))
             {
                 clk(c, len);
             }
