@@ -185,6 +185,7 @@ public struct Project
                 }
             }
         }
+        proj.setDependencies(deps);
 
         return ok!(Project, string)(proj);
     }   
