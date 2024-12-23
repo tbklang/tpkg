@@ -8,7 +8,8 @@ import niknaks.functional : Result, ok, error;
 public enum ProjectType
 {
     UNKNOWN,
-    APPLICATION
+    APPLICATION,
+    LIBRARY
 }
 
 public static ProjectType getProjectType(string str)
@@ -16,6 +17,10 @@ public static ProjectType getProjectType(string str)
     if(str == "application")
     {
         return ProjectType.APPLICATION;
+    }
+    else if(str == "library")
+    {
+        return ProjectType.LIBRARY;
     }
     else
     {
@@ -140,10 +145,11 @@ public struct Project
             return error!(string, Project)("The 'type' field must be a string");
         }
 
-        ProjectType projectType = getProjectType(json["type"].str());
+        string projectType_s = json["type"].str();
+        ProjectType projectType = getProjectType(projectType_s);
         if(projectType == ProjectType.UNKNOWN)
         {
-            ERROR("The project type is not set to anything supported");
+            return error!(string, Project)(format("The project type '%s' is not set to anything supported", projectType_s));
         }
 
         proj.setType(projectType);
