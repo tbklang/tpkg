@@ -325,7 +325,7 @@ public class PackageManager
     public void unstore(Package p)
     {
         string packDir = buildPath(this.storePath, p.getName());
-        DEBUG("Unstoring %s at pack dir '%s'...", p, packDir);
+        DEBUG(format("Unstoring %s at pack dir '%s'...", p, packDir));
 
         try
         {
