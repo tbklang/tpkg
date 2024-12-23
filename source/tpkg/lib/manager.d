@@ -347,17 +347,26 @@ public class PackageManager
 
     }
 
+    import tlang.compiler.core : CompileResult;
+
     /** 
      * Builds the package at the given
-     * storage referenece
+     * storage reference
      *
      * Params:
      *   sr = the `StoreRef`
+     * Returns: a `Result` containing
+     * either an error text or a compilation
+     * result
      */
-    public void build(StoreRef sr)
+    public Result!(CompileResult, string) build(StoreRef sr)
     {
-        auto p_res = parse(sr);
-        // TODO: handle error
+        Result!(Project, string) p_res = parse(sr);
+
+        if(p_res.is_error())
+        {
+            return error!(string, CompileResult)(p_res.error());
+        }
 
         Project p = p_res.ok();
         DEBUG(p);
@@ -365,20 +374,28 @@ public class PackageManager
         string e_path = buildPath(sr.getPackDir(), p.getEntrypoint());
         DEBUG("Opening entrypoint file at '", e_path, "'...");
 
-        import tlang.compiler.core : Compiler, forFile, CompileResult;
+        import tlang.compiler.core : Compiler, forFile;
         Result!(Compiler, Exception) c_res = forFile(e_path);
 
         if(c_res.is_error())
         {
-            // TODO: Handle this
-            return;
+            return error!(string, CompileResult)(c_res.error().msg);
         }
 
         Compiler c = c_res.ok();
-        // TODO: Would be nice if this could return something, would need to update the `Compiler`
-        // ... API and also the `CodeEmitter` API (probably)
-        CompileResult cmp_res = c.compile(); // TODO: Alias as compilation rsult in core.compiler
-        INFO(format("Generated executable at '%s' in %d ms", cmp_res.createdFile, cmp_res.elapsedTime.total!("msecs")()));
+
+        import tlang.misc.exceptions : TError;
+
+        try
+        {
+            CompileResult cmp_res = c.compile();
+            INFO(format("Generated executable at '%s' in %d ms", cmp_res.createdFile, cmp_res.elapsedTime.total!("msecs")()));
+            return ok!(CompileResult, string)(cmp_res);
+        }
+        catch(TError e)
+        {
+            return error!(string, CompileResult)(e.msg);
+        }
     }
 
     /** 
