@@ -371,6 +371,15 @@ public class PackageManager
         Project p = p_res.ok();
         DEBUG(p);
 
+        // FIXME: Implement compiling a library, perhaps
+        // choosing ANY module file (a `.t` file) as the
+        // entrypoint would work
+        import tpkg.lib.project : ProjectType;
+        if(p.getType() == ProjectType.LIBRARY)
+        {
+            return error!(string, CompileResult)("Cannot build a library YET");
+        }
+
         string e_path = buildPath(sr.getPackDir(), p.getEntrypoint());
         DEBUG("Opening entrypoint file at '", e_path, "'...");
 
