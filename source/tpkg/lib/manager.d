@@ -628,10 +628,13 @@ version(unittest)
 
         public override void fetchImpl(Package p, ProgressCallback clk)
         {
+            string fetchURL = format("https://deavmi.assigned.network/git/tlang/%s/archive/master.zip", p.getName());
+            DEBUG("fetchURL: ", fetchURL);
+
             // TODO: Set timeout on both requests
             size_t chunkSize = 100;
             import std.net.curl : get, AutoProtocol, byChunk, byChunkAsync, HTTP;
-            HTTP cl = HTTP("https://deavmi.assigned.network/git/tlang/tshell/archive/master.zip");
+            HTTP cl = HTTP(fetchURL);
             cl.method(HTTP.Method.head);
             cl.perform();
             string[string] hdrs = cl.responseHeaders();
@@ -639,7 +642,7 @@ version(unittest)
             import std.conv : to;
             size_t len = to!(size_t)(hdrs["content-length"]);
 
-            foreach(ubyte[] c; byChunkAsync("https://deavmi.assigned.network/git/tlang/tshell/archive/master.zip", chunkSize))
+            foreach(ubyte[] c; byChunkAsync(fetchURL, chunkSize))
             {
                 clk(c, len);
             }
@@ -661,6 +664,31 @@ unittest
     Package res_p = res.get();
     assert(res_p);
     assert(res_p.getName() == "tshell");
+
+    manager.fetch(res_p);
+
+    auto l_res = manager.lookup(res_p);
+    assert(l_res.is_okay());
+    auto l_res_opt = l_res.ok();
+    DEBUG(l_res_opt);
+    assert(l_res_opt.isPresent());
+    manager.build(l_res_opt.get());
+}
+
+unittest
+{
+    PackageManager manager = new PackageManager();
+
+    DummySource src = new DummySource();
+    Package[] bogus = [new Package(src, "core")];
+    src.setEntries(bogus);
+    manager.addSource(src);
+
+    Optional!(Package) res = manager.search("c*");
+    assert(res.isPresent());
+    Package res_p = res.get();
+    assert(res_p);
+    assert(res_p.getName() == "core");
 
     manager.fetch(res_p);
 
