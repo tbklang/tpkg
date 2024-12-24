@@ -13,6 +13,13 @@ import std.file : isDir, isFile, exists;
 import std.path : expandTilde;
 import std.exception : ErrnoException;
 import std.file : FileException;
+import std.zip;
+import tpkg.lib.project : Project;
+import std.stdio : File;
+import std.string : format;
+import std.path : buildPath, pathSplitter;
+import niknaks.functional : Result, Optional, ok, error;
+import tlang.compiler.core : CompileResult;
 
 /** 
  * A package manager which
@@ -94,12 +101,6 @@ public class PackageManager
     {
         this.sources.linearRemoveElement(src);
     }
-
-    import std.zip;
-    import tpkg.lib.project : Project;
-    import std.stdio : File;
-    import std.string : format;
-    import std.path : buildPath, pathSplitter;
 
     private struct StoreRef
     {
@@ -224,8 +225,6 @@ public class PackageManager
         return StoreRef(packDir);
     }
 
-    import niknaks.functional : Result, Optional, ok, error;
-
     public Result!(Optional!(StoreRef), string) lookup(Package p)
     {
         return lookup(p.getName());
@@ -346,7 +345,10 @@ public class PackageManager
 
     }
 
-    import tlang.compiler.core : CompileResult;
+    // private VisitationTree!(Project) buildDep()
+    // {
+
+    // }
 
     /** 
      * Builds the package at the given
@@ -371,6 +373,9 @@ public class PackageManager
         DEBUG(p);
 
         // TODO: Add dependency fetching here
+        import niknaks.containers : VisitationTree;
+        VisitationTree!(Project) dep_tree = new VisitationTree!(Project)(p);
+
         string[] dependencies = p.getDependencies();
         INFO("Fetching ", dependencies.length, " dependencies...");
         foreach(string dep; dependencies)
@@ -383,12 +388,17 @@ public class PackageManager
                 return error!(string, CompileResult)(format("Could not find dependency '%s'!", dep));
             }
             
+            
             Package dep_pack = dep_opt.get();
+            // VisitationTree!(Project) dep_node = new VisitationTree!(Project)(dep_pack);
             fetch(dep_pack); // fetch dependency
             // FIXME: Error check above
             Result!(Optional!(StoreRef), string) dep_sref = lookup(dep_pack); // parse it
             // FIXME: Error check above
             INFO("Fetched dependency '", dep, "'");
+
+
+            // dep_tree.appendNode(dep_pack);
         }
 
         // FIXME: Implement compiling a library, perhaps
