@@ -345,10 +345,15 @@ public class PackageManager
 
     }
 
-    // private VisitationTree!(Project) buildDep()
-    // {
-
-    // }
+    import niknaks.containers : VisitationTree;
+    private VisitationTree!(Project) buildDepFrom
+    (
+        Project rootProject,
+        VisitationTree!(Project) tree
+    )
+    {
+        return null;
+    }
 
     /** 
      * Builds the package at the given
@@ -373,7 +378,6 @@ public class PackageManager
         DEBUG(p);
 
         // TODO: Add dependency fetching here
-        import niknaks.containers : VisitationTree;
         VisitationTree!(Project) dep_tree = new VisitationTree!(Project)(p);
 
         string[] dependencies = p.getDependencies();
