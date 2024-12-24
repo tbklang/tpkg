@@ -28,9 +28,15 @@ public class Package
 
     this(Source from, string name)
     {
+        this(from, name, []);
+    }
+
+    this(Source from, string name, Package[] dependencies)
+    {
         assert(from);
         this.from = from;
         this.name = name;
+        this.dependencies = dependencies;
     }
 
     public string getName()
@@ -41,6 +47,11 @@ public class Package
     public Source getSource()
     {
         return this.from;
+    }
+
+    public Package[] getDependencies()
+    {
+        return this.dependencies;
     }
 }
 
