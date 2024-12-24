@@ -2,10 +2,6 @@
 	"name": "MyProj",
 	"description": "A basic project",
 	"type": "application",
-	"entrypoint": "../code/source/tlang/testing/simple_comments.t",
-	"dependencies": [
-		"file:///tmp/bruh",
-		"http://google.com/mypack.pkg"
-	]
+	"entrypoint": "../code/source/tlang/testing/modules/a.t"
 	
 }
