@@ -375,7 +375,7 @@ public class PackageManager
         INFO("Fetching ", dependencies.length, " dependencies...");
         foreach(string dep; dependencies)
         {
-            INFO("Fetching '", dep, "'...");
+            INFO("Fetching dependency '", dep, "'...");
             Optional!(Package) dep_opt = search(dep);
             if(dep_opt.isEmpty())
             {
@@ -383,7 +383,12 @@ public class PackageManager
                 return error!(string, CompileResult)(format("Could not find dependency '%s'!", dep));
             }
             
-            fetch(dep_opt.get());
+            Package dep_pack = dep_opt.get();
+            fetch(dep_pack); // fetch dependency
+            // FIXME: Error check above
+            Result!(Optional!(StoreRef), string) dep_sref = lookup(dep_pack); // parse it
+            // FIXME: Error check above
+            INFO("Fetched dependency '", dep, "'");
         }
 
         // FIXME: Implement compiling a library, perhaps
