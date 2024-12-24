@@ -256,7 +256,6 @@ public class PackageManager
         }
         else
         {
-            ERROR("sddd", packDir);
             return ok!(Optional!(StoreRef), string)(Optional!(StoreRef).empty());
         }
     }
