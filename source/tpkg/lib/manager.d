@@ -594,19 +594,6 @@ public abstract class Source
     protected abstract void fetchImpl(Package p, ProgressCallback onProgress);
 }
 
-// public struct Source
-// {
-//     private SourceKind kind;
-//     private string uri;
-
-//     this(string uri, SourceKind kind)
-//     {
-//         this.uri = uri;
-//         this.kind = kind;
-//     }
-// }
-
-
 unittest
 {
     PackageManager manager = new PackageManager();
