@@ -21,7 +21,7 @@ import tpkg.lib.manager : Source;
 // also their dependencies
 public class Package
 {
-    private Source from;
+    private Source from; // FIXME: Remove this
     private string name;
     private Version ver;
     private Package[] dependencies;
@@ -44,6 +44,7 @@ public class Package
         return this.name;
     }
 
+    // FIXME: Remove this
     public Source getSource()
     {
         return this.from;
