@@ -78,4 +78,14 @@ public final class PackageCandidate
         this.name = name;
         this.ver = ver;
     }
+
+    public string getName()
+    {
+        return this.name;
+    }
+
+    public Source getSource()
+    {
+        return this.from;
+    }
 }
