@@ -60,3 +60,22 @@ public class Package
 // {
 //     private 
 // }
+
+/** 
+ * Represents a candidiate returned
+ * after performing a package search
+ */
+public final class PackageCandidate
+{
+    private Source from;
+    private string name;
+    private Version ver;
+
+    this(Source from, string name, Version ver)
+    {
+        assert(from);
+        this.from = from;
+        this.name = name;
+        this.ver = ver;
+    }
+}
