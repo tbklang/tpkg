@@ -506,20 +506,20 @@ public class PackageManager
             import niknaks.containers : Graph;
 
             // Pool current node
-            bool* map_ent = l.getName() in map;
+            bool* map_ent = pc.getCmp() in map;
             if(map_ent is null)
             {
-                map[l.getName()] = false;
+                map[pc.getCmp()] = false;
             }
 
             // Has it been visited?
-            if(map[l.getName()])
+            if(map[pc.getCmp()])
             {
                 return s_ref;
             }
 
             // Mark as visited
-            map[l.getName()] = true;
+            map[pc.getCmp()] = true;
 
 
 
@@ -533,18 +533,7 @@ public class PackageManager
 
             foreach(string dep; l.getDependencies())
             {
-                bool* dep_ent = dep in map;
-                // Pool
-                if(dep_ent is null)
-                {
-                    map[dep] = false;
-                }
-
-                // Has it been visited?
-                if(map[dep])
-                {
-                    continue;
-                }
+                
 
                 DEBUG("Searching for dependency '", dep, "'...");
                 Optional!(PackageCandidate) dep_opt = search(dep);
@@ -563,8 +552,21 @@ public class PackageManager
                     );  
                 }
 
-                INFO("Fetching dependency '", dep, "'...");
                 PackageCandidate dep_pc = dep_opt.get();
+                bool* dep_ent = dep_pc.getCmp() in map;
+                // Pool
+                if(dep_ent is null)
+                {
+                    map[dep_pc.getCmp()] = false;
+                }
+
+                // Has it been visited?
+                if(map[dep_pc.getCmp()])
+                {
+                    continue;
+                }
+
+                INFO("Fetching dependency '", dep, "'...");
                 StoreRef dep_sr = fetch(dep_pc, map); // TODO: Handle error
                 Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
 
