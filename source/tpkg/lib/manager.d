@@ -443,8 +443,10 @@ public class PackageManager
      *   TPkgException on error fetching
      * the provided package or validating
      * it
+     * Returns: a `StoreRef` for the fetched
+     * package
      */
-    public void fetch(PackageCandidate pc)
+    public StoreRef fetch(PackageCandidate pc)
     {
         Source s = pc.getSource();
         ubyte[] data = s.fetch(pc); // TODO: Callback for progress of fetching
@@ -486,6 +488,35 @@ public class PackageManager
                     )
                 );
             }
+
+            Project l = l_res.ok();
+            // VisitationTree!() dep_tree = new VisitationTree!(Package)(p);
+
+            foreach(string dep; l.getDependencies())
+            {
+                DEBUG("Searching for dependency '", dep, "'...");
+                Optional!(PackageCandidate) dep_opt = search(dep);
+                if(dep_opt.isEmpty())
+                {
+                    // FIXME: Implement error handling here
+                    ERROR("Could not find dependency '", dep, "'!");
+                    // return error!(string, CompileResult)(format("Could not find dependency '%s'!", dep));
+                    throw new TPkgException
+                    (
+                        format
+                        (
+                            "Could not find dependency %s:",
+                            pc.getName()
+                        )
+                    );  
+                }
+
+                INFO("Fetching dependency '", dep, "'...");
+                StoreRef dep_sr = fetch(dep_opt.get());
+            }
+
+
+            return s_ref;
         }
         catch(ZipException e)
         {
