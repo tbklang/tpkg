@@ -56,12 +56,6 @@ public class Package
     }
 }
 
-
-// public struct Dependency
-// {
-//     private 
-// }
-
 /** 
  * Represents a candidiate returned
  * after performing a package search
@@ -105,4 +99,32 @@ public final class PackageCandidate
 
     //     return i;
     // }
+}
+
+/** 
+ * The result of a search
+ * which combines the package
+ * found along with the source
+ * whereby it was found in
+ */
+public final class SearchResult
+{
+    private Source s;
+    private PackageCandidate p;
+
+    this(Source source, PackageCandidate pack)
+    {
+        this.s = source;
+        this.p = pack;
+    }
+
+    public Source source()
+    {
+        return this.s;
+    }
+
+    public PackageCandidate pack()
+    {
+        return this.p;
+    }
 }

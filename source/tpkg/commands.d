@@ -180,7 +180,7 @@ private mixin template RequiresConfig()
 }
 import tpkg.lib.manager;
 import niknaks.functional : Optional;
-import tpkg.lib.pack : Package, PackageCandidate;
+import tpkg.lib.pack : Package, SearchResult;
 
 @Command("search", "Search for a package")
 struct SearchCommand
@@ -195,7 +195,7 @@ struct SearchCommand
         PackageManager pman = PackageManager.fromConfiguration(config);
 
         // TODO: This should return a list in actuality
-        Optional!(PackageCandidate) res = pman.search(regex);
+        Optional!(SearchResult) res = pman.search(regex);
 
         if(res.isEmpty())
         {

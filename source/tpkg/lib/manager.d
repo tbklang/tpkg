@@ -20,6 +20,7 @@ import std.string : format;
 import std.path : buildPath, pathSplitter;
 import niknaks.functional : Result, Optional, ok, error;
 import tlang.compiler.core : CompileResult;
+import tpkg.lib.pack : SearchResult;
 
 /** 
  * A package manager which
@@ -536,7 +537,7 @@ public class PackageManager
                 
 
                 DEBUG("Searching for dependency '", dep, "'...");
-                Optional!(PackageCandidate) dep_opt = search(dep);
+                Optional!(SearchResult) dep_opt = search(dep);
                 if(dep_opt.isEmpty())
                 {
                     // FIXME: Implement error handling here
@@ -552,7 +553,10 @@ public class PackageManager
                     );  
                 }
 
-                PackageCandidate dep_pc = dep_opt.get();
+                SearchResult sr = dep_opt.get();
+
+                Source dep_src = sr.source();
+                PackageCandidate dep_pc = sr.pack();
                 bool* dep_ent = dep_pc.getCmp() in map;
                 // Pool
                 if(dep_ent is null)
@@ -617,13 +621,13 @@ public class PackageManager
     //     return null;
     // }
 
-    public Optional!(PackageCandidate) search(string regex)
+    public Optional!(SearchResult) search(string regex)
     {
         // TODO: Return a list of candidates in future
-        PackageCandidate[] matches;
+        SearchResult[] matches;
         foreach(Source src; this.sources[])
         {
-            PackageCandidate[] localFound;
+            SearchResult[] localFound;
             if(src.searchPackages(regex, localFound))
             {
                 matches ~= localFound;
@@ -648,7 +652,7 @@ public class PackageManager
 
         }
 
-        return matches.length ? Optional!(PackageCandidate)(matches[0]) : Optional!(PackageCandidate).empty();
+        return matches.length ? Optional!(SearchResult)(matches[0]) : Optional!(SearchResult).empty();
     }
 }
 
@@ -671,7 +675,7 @@ public abstract class Source
         this.uri = uri;
     }
 
-    public abstract bool searchPackages(string regex, ref PackageCandidate[] found);
+    public abstract bool searchPackages(string regex, ref SearchResult[] found);
 
     public final ubyte[] fetch(PackageCandidate pc)
     {
@@ -731,7 +735,7 @@ unittest
 {
     PackageManager manager = new PackageManager();
 
-    Optional!(PackageCandidate) res = manager.search("tshell");
+    Optional!(SearchResult) res = manager.search("tshell");
     assert(res.isEmpty());
 }
 
@@ -752,22 +756,33 @@ version(unittest)
             this.dummyEntries = dummyEntries;
         }
 
-        public override bool searchPackages(string regex, ref PackageCandidate[] found)
+        public override bool searchPackages(string regex, ref SearchResult[] found)
         {
             // Loop over each entry and match on its name
-            foreach(PackageCandidate ent; this.dummyEntries)
+            foreach(SearchResult ent; makeBogusSearchResults())
             {
-                RegexMatch!(string) m = matchAll(ent.getName(), regex);
+                PackageCandidate ent_pc = ent.pack();
+                RegexMatch!(string) m = matchAll(ent_pc.getName(), regex);
                 DEBUG("Regex res: ", m);
 
                 if(!m.empty())
                 {
-                    DEBUG(format("Matched '%s' to '%s'", ent, regex));
+                    DEBUG(format("Matched '%s' to '%s'", ent_pc, regex));
                     found ~= ent;
                 }
             }
 
             return cast(bool)found.length;
+        }
+
+        private SearchResult[] makeBogusSearchResults()
+        {
+            SearchResult[] s_r;
+            foreach(PackageCandidate pc; this.dummyEntries)
+            {
+                s_r ~= new SearchResult(this, pc);
+            }
+            return s_r;
         }
 
         public override void fetchImpl(PackageCandidate pc, ProgressCallback clk)
@@ -833,9 +848,9 @@ unittest
     // FIXME: The search should return almost a package "candidate"
     // this can then be provided to `fetch` which should actually
     // return a fully-populated `Package`
-    Optional!(PackageCandidate) res = manager.search("tsh*");
+    Optional!(SearchResult) res = manager.search("tsh*");
     assert(res.isPresent());
-    PackageCandidate res_p = res.get();
+    PackageCandidate res_p = res.get().pack();
     assert(res_p);
     assert(res_p.getName() == "tshell");
 
