@@ -448,6 +448,18 @@ public class PackageManager
      */
     public StoreRef fetch(PackageCandidate pc)
     {
+        // Project root; // FIXME: Try and do without this
+        // VisitationTree!(Project) v = new VisitationTree!(Project)(root);
+
+        bool[string] map;
+
+        return fetch(pc, map);
+    }
+
+    import niknaks.containers : VisitationTree;
+
+    private StoreRef fetch(PackageCandidate pc, bool[string] map)
+    {
         Source s = pc.getSource();
         ubyte[] data = s.fetch(pc); // TODO: Callback for progress of fetching
         DEBUG(format("Retrieved archive of %d bytes", data.length));
@@ -490,10 +502,50 @@ public class PackageManager
             }
 
             Project l = l_res.ok();
-            // VisitationTree!() dep_tree = new VisitationTree!(Package)(p);
+
+            import niknaks.containers : Graph;
+
+            // Pool current node
+            bool* map_ent = l.getName() in map;
+            if(map_ent is null)
+            {
+                map[l.getName()] = false;
+            }
+
+            // Has it been visited?
+            if(map[l.getName()])
+            {
+                return s_ref;
+            }
+
+            // Mark as visited
+            map[l.getName()] = true;
+
+
+
+
+
+
+            // VisitationTree!(Project) dep_tree = new VisitationTree!(Project)(l);
+            // dep_tree.mark();
+
+            // _v.appendNode(dep_tree);
 
             foreach(string dep; l.getDependencies())
             {
+                bool* dep_ent = dep in map;
+                // Pool
+                if(dep_ent is null)
+                {
+                    map[dep] = false;
+                }
+
+                // Has it been visited?
+                if(map[dep])
+                {
+                    continue;
+                }
+
                 DEBUG("Searching for dependency '", dep, "'...");
                 Optional!(PackageCandidate) dep_opt = search(dep);
                 if(dep_opt.isEmpty())
@@ -512,7 +564,14 @@ public class PackageManager
                 }
 
                 INFO("Fetching dependency '", dep, "'...");
-                StoreRef dep_sr = fetch(dep_opt.get());
+                PackageCandidate dep_pc = dep_opt.get();
+                StoreRef dep_sr = fetch(dep_pc, map); // TODO: Handle error
+                Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
+
+                Project dep_p = dep_p_res.ok();
+
+
+
             }
 
 
