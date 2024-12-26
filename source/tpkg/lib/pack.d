@@ -99,6 +99,13 @@ public final class PackageCandidate
 
     //     return i;
     // }
+
+
+    public override string toString()
+    {
+        import std.string : format;
+        return format("PackageCandidate (%s/%s)", getName(), ver.repr());
+    }
 }
 
 /** 
