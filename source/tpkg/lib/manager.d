@@ -225,9 +225,9 @@ public class PackageManager
         return StoreRef(packDir);
     }
 
-    public Result!(Optional!(StoreRef), string) lookup(Package p)
+    public Result!(Optional!(StoreRef), string) lookup(PackageCandidate pc)
     {
-        return lookup(p.getName());
+        return lookup(pc.getName());
     }
 
     public Result!(Optional!(StoreRef), string) lookup(string name)
@@ -320,9 +320,10 @@ public class PackageManager
         }
     }
 
-    public void unstore(Package p)
+    public void unstore(StoreRef p)
     {
-        string packDir = buildPath(this.storePath, p.getName());
+        // string packDir = buildPath(this.storePath, p.getName());
+        string packDir = p.getPackDir();
         DEBUG(format("Unstoring %s at pack dir '%s'...", p, packDir));
 
         try
@@ -337,22 +338,12 @@ public class PackageManager
                 format
                 (
                     "Error unstoring package %s: %s",
-                    p.getName(),
+                    p, // TODO: Fix error message text
                     e.message
                 )
             );
         }
 
-    }
-
-    import niknaks.containers : VisitationTree;
-    private VisitationTree!(Project) buildDepFrom
-    (
-        Project rootProject,
-        VisitationTree!(Project) tree
-    )
-    {
-        return null;
     }
 
     /** 
@@ -377,33 +368,34 @@ public class PackageManager
         Project p = p_res.ok();
         DEBUG(p);
 
-        // TODO: Add dependency fetching here
-        VisitationTree!(Project) dep_tree = new VisitationTree!(Project)(p);
+        // // TODO: Add dependency fetching here
+        // VisitationTree!(Package) dep_tree = new VisitationTree!(Package)(p);
+        // buildDepFrom(p, dep_tree);
 
-        string[] dependencies = p.getDependencies();
-        INFO("Fetching ", dependencies.length, " dependencies...");
-        foreach(string dep; dependencies)
-        {
-            INFO("Fetching dependency '", dep, "'...");
-            Optional!(Package) dep_opt = search(dep);
-            if(dep_opt.isEmpty())
-            {
-                ERROR("Could not find dependency '", dep, "'!");
-                return error!(string, CompileResult)(format("Could not find dependency '%s'!", dep));
-            }
+        // string[] dependencies = p.getDependencies();
+        // INFO("Fetching ", dependencies.length, " dependencies...");
+        // foreach(string dep; dependencies)
+        // {
+        //     INFO("Fetching dependency '", dep, "'...");
+        //     Optional!(PackageCandidate) dep_opt = search(dep);
+        //     if(dep_opt.isEmpty())
+        //     {
+        //         ERROR("Could not find dependency '", dep, "'!");
+        //         return error!(string, CompileResult)(format("Could not find dependency '%s'!", dep));
+        //     }
             
             
-            Package dep_pack = dep_opt.get();
-            // VisitationTree!(Project) dep_node = new VisitationTree!(Project)(dep_pack);
-            fetch(dep_pack); // fetch dependency
-            // FIXME: Error check above
-            Result!(Optional!(StoreRef), string) dep_sref = lookup(dep_pack); // parse it
-            // FIXME: Error check above
-            INFO("Fetched dependency '", dep, "'");
+        //     Package dep_pack = dep_opt.get();
+        //     // VisitationTree!(Project) dep_node = new VisitationTree!(Project)(dep_pack);
+        //     fetch(dep_pack); // fetch dependency
+        //     // FIXME: Error check above
+        //     Result!(Optional!(StoreRef), string) dep_sref = lookup(dep_pack); // parse it
+        //     // FIXME: Error check above
+        //     INFO("Fetched dependency '", dep, "'");
 
 
-            // dep_tree.appendNode(dep_pack);
-        }
+        //     // dep_tree.appendNode(dep_pack);
+        // }
 
         // FIXME: Implement compiling a library, perhaps
         // choosing ANY module file (a `.t` file) as the
@@ -446,16 +438,16 @@ public class PackageManager
      * it in the package store
      *
      * Params:
-     *   p = the package
+     *   pc = the package candidate
      * Throws: 
      *   TPkgException on error fetching
      * the provided package or validating
      * it
      */
-    public void fetch(Package p)
+    public void fetch(PackageCandidate pc)
     {
-        Source s = p.getSource();
-        ubyte[] data = s.fetch(p); // TODO: Callback for progress of fetching
+        Source s = pc.getSource();
+        ubyte[] data = s.fetch(pc); // TODO: Callback for progress of fetching
         DEBUG(format("Retrieved archive of %d bytes", data.length));
 
         import std.zip : ZipArchive, ZipException, ArchiveMember;
@@ -473,7 +465,7 @@ public class PackageManager
             }
 
             // Unpack the archive into the data store
-            auto s_ref = store(zar, p.getName());
+            auto s_ref = store(zar, pc.getName());
             DEBUG(s_ref);
 
             // Validate package by attempting to
@@ -482,14 +474,14 @@ public class PackageManager
             if(l_res.is_error())
             {
                 // Remove from store
-                unstore(p);
+                unstore(s_ref);
 
                 throw new TPkgException
                 (
                     format
                     (
                         "Error validating package %s: %s",
-                        p.getName(),
+                        pc.getName(),
                         l_res.error()
                     )
                 );
@@ -502,20 +494,44 @@ public class PackageManager
                 format
                 (
                     "Error opening package archive for %s: %s",
-                    p,
+                    pc,
                     e
                 )
             );
         }
     }
 
-    public Optional!(Package) search(string regex)
+    // import niknaks.containers : VisitationTree;
+    // private VisitationTree!(Package) buildDepFrom
+    // (
+    //     Package rootPackage,
+    //     VisitationTree!(Package) tree
+    // )
+    // {
+    //     foreach(Package dep; rootPackage.getDependencies())
+    //     {
+    //         Optional!(Package) dep_pack_opt = search(dep);
+    //         if(dep_pack_opt.isEmpty())
+    //         {
+    //             ERROR(format("Could not find dependency '%s' required for '%s'", dep, rootPackage.getName()));
+    //             // FIXME: Throw error maybe
+    //             return null;
+    //         }
+
+    //         Package dep_pack = dep_pack_opt.get();
+    //         *(cast(char*)0) = 0;
+    //     }
+
+    //     return null;
+    // }
+
+    public Optional!(PackageCandidate) search(string regex)
     {
         // TODO: Return a list of candidates in future
-        Package[] matches;
+        PackageCandidate[] matches;
         foreach(Source src; this.sources[])
         {
-            Package[] localFound;
+            PackageCandidate[] localFound;
             if(src.searchPackages(regex, localFound))
             {
                 matches ~= localFound;
@@ -534,7 +550,13 @@ public class PackageManager
             }
         }
 
-        return matches.length ? Optional!(Package)(matches[0]) : Optional!(Package).empty();
+        // Realise dependency packages
+        void blit()
+        {
+
+        }
+
+        return matches.length ? Optional!(PackageCandidate)(matches[0]) : Optional!(PackageCandidate).empty();
     }
 }
 
@@ -544,7 +566,7 @@ public class PackageManager
 //     HTTP
 // }
 
-import tpkg.lib.pack : Package, Version;
+import tpkg.lib.pack : Package, Version, PackageCandidate;
 
 public alias ProgressCallback = void delegate(ubyte[] got, size_t total);
 
@@ -557,9 +579,9 @@ public abstract class Source
         this.uri = uri;
     }
 
-    public abstract bool searchPackages(string regex, ref Package[] found);
+    public abstract bool searchPackages(string regex, ref PackageCandidate[] found);
 
-    public final ubyte[] fetch(Package p)
+    public final ubyte[] fetch(PackageCandidate pc)
     {
         size_t got = 0;
         ubyte[] data;
@@ -573,7 +595,7 @@ public abstract class Source
                 b.max = total;
                 string m()
                 {
-                    return p.getName();
+                    return pc.getName();
                 }
                 b.message = &m;
             }
@@ -590,8 +612,8 @@ public abstract class Source
 
         try
         {
-            DEBUG(format("Fetching %s...", p));
-            fetchImpl(p, &testProg);
+            DEBUG(format("Fetching %s...", pc));
+            fetchImpl(pc, &testProg);
             
             return data;
         }
@@ -602,7 +624,7 @@ public abstract class Source
                 format
                 (
                     "Error whilst fetching '%s' from source %s: %s",
-                    p,
+                    pc,
                     this,
                     e.msg
                 )
@@ -610,14 +632,14 @@ public abstract class Source
         }
     }
 
-    protected abstract void fetchImpl(Package p, ProgressCallback onProgress);
+    protected abstract void fetchImpl(PackageCandidate pc, ProgressCallback onProgress);
 }
 
 unittest
 {
     PackageManager manager = new PackageManager();
 
-    Optional!(Package) res = manager.search("tshell");
+    Optional!(PackageCandidate) res = manager.search("tshell");
     assert(res.isEmpty());
 }
 
@@ -626,22 +648,22 @@ version(unittest)
     class DummySource : Source
     {
         import std.regex;
-        private Package[] dummyEntries;
+        private PackageCandidate[] dummyEntries;
 
         this()
         {
             super("dummy://");
         }
 
-        public void setEntries(Package[] dummyEntries)
+        public void setEntries(PackageCandidate[] dummyEntries)
         {
             this.dummyEntries = dummyEntries;
         }
 
-        public override bool searchPackages(string regex, ref Package[] found)
+        public override bool searchPackages(string regex, ref PackageCandidate[] found)
         {
             // Loop over each entry and match on its name
-            foreach(Package ent; this.dummyEntries)
+            foreach(PackageCandidate ent; this.dummyEntries)
             {
                 RegexMatch!(string) m = matchAll(ent.getName(), regex);
                 DEBUG("Regex res: ", m);
@@ -656,9 +678,9 @@ version(unittest)
             return cast(bool)found.length;
         }
 
-        public override void fetchImpl(Package p, ProgressCallback clk)
+        public override void fetchImpl(PackageCandidate pc, ProgressCallback clk)
         {
-            string fetchURL = format("https://deavmi.assigned.network/git/tlang/%s/archive/master.zip", p.getName());
+            string fetchURL = format("https://deavmi.assigned.network/git/tlang/%s/archive/master.zip", pc.getName());
             DEBUG("fetchURL: ", fetchURL);
 
             // TODO: Set timeout on both requests
@@ -680,18 +702,48 @@ version(unittest)
     }
 }
 
+version(unittest)
+{
+    alias DV = DummyVersion;
+    class DummyVersion : Version
+    {
+        private string ver_s;
+        this(string ver)
+        {
+            this.ver_s = ver;
+        }
+
+        public long cmp(Version rhs)
+        {
+            return 0; // FIXME: Implement me
+        }
+
+        public string repr()
+        {
+            return ver_s;
+        }
+    }
+}
+
 unittest
 {
     PackageManager manager = new PackageManager();
 
     DummySource src = new DummySource();
-    Package[] bogus = [new Package(src, "tshell"), new Package(src, "core")];
+    PackageCandidate[] bogus =
+    [
+        new PackageCandidate(src, "tshell", new DV("0.0.1")),
+        new PackageCandidate(src, "core",  new DV("0.0.1"))
+    ];
     src.setEntries(bogus);
     manager.addSource(src);
 
-    Optional!(Package) res = manager.search("tsh*");
+    // FIXME: The search should return almost a package "candidate"
+    // this can then be provided to `fetch` which should actually
+    // return a fully-populated `Package`
+    Optional!(PackageCandidate) res = manager.search("tsh*");
     assert(res.isPresent());
-    Package res_p = res.get();
+    PackageCandidate res_p = res.get();
     assert(res_p);
     assert(res_p.getName() == "tshell");
 
