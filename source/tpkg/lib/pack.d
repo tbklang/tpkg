@@ -89,4 +89,20 @@ public final class PackageCandidate
     {
         return this.from;
     }
+
+    public string getCmp()
+    {
+        return name~":"~ver.repr();
+    }
+
+    // override size_t toHash() nothrow
+    // {
+    //     size_t i = 0;
+    //     foreach(char c; getCmp())
+    //     {
+    //         i += c;
+    //     }
+
+    //     return i;
+    // }
 }
