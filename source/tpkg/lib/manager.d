@@ -840,8 +840,8 @@ unittest
     DummySource src = new DummySource();
     PackageCandidate[] bogus =
     [
-        new PackageCandidate(src, "tshell", new DV("0.0.1")),
-        new PackageCandidate(src, "core",  new DV("0.0.1"))
+        new PackageCandidate("tshell", new DV("0.0.1")),
+        new PackageCandidate("core",  new DV("0.0.1"))
     ];
     src.setEntries(bogus);
     manager.addSource(src);

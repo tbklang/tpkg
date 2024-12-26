@@ -62,14 +62,11 @@ public class Package
  */
 public final class PackageCandidate
 {
-    private Source from;
     private string name;
     private Version ver;
 
-    this(Source from, string name, Version ver)
+    this(string name, Version ver)
     {
-        assert(from);
-        this.from = from;
         this.name = name;
         this.ver = ver;
     }
@@ -77,11 +74,6 @@ public final class PackageCandidate
     public string getName()
     {
         return this.name;
-    }
-
-    public Source getSource()
-    {
-        return this.from;
     }
 
     public string getCmp()
