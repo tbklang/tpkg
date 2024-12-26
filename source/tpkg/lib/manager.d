@@ -440,6 +440,8 @@ public class PackageManager
      *
      * Params:
      *   pc = the package candidate
+     *   source = the source to fetch
+     * from
      * Throws: 
      *   TPkgException on error fetching
      * the provided package or validating
@@ -447,22 +449,21 @@ public class PackageManager
      * Returns: a `StoreRef` for the fetched
      * package
      */
-    public StoreRef fetch(PackageCandidate pc)
+    public StoreRef fetch(PackageCandidate pc, Source source)
     {
         // Project root; // FIXME: Try and do without this
         // VisitationTree!(Project) v = new VisitationTree!(Project)(root);
 
         bool[string] map;
 
-        return fetch(pc, map);
+        return fetch(pc, source, map);
     }
 
     import niknaks.containers : VisitationTree;
 
-    private StoreRef fetch(PackageCandidate pc, bool[string] map)
+    private StoreRef fetch(PackageCandidate pc, Source source, bool[string] map)
     {
-        Source s = pc.getSource();
-        ubyte[] data = s.fetch(pc); // TODO: Callback for progress of fetching
+        ubyte[] data = source.fetch(pc); // TODO: Callback for progress of fetching
         DEBUG(format("Retrieved archive of %d bytes", data.length));
 
         import std.zip : ZipArchive, ZipException, ArchiveMember;
@@ -571,7 +572,7 @@ public class PackageManager
                 }
 
                 INFO("Fetching dependency '", dep, "'...");
-                StoreRef dep_sr = fetch(dep_pc, map); // TODO: Handle error
+                StoreRef dep_sr = fetch(dep_pc, dep_src, map); // TODO: Handle error
                 Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
 
                 Project dep_p = dep_p_res.ok();
@@ -850,13 +851,20 @@ unittest
     // return a fully-populated `Package`
     Optional!(SearchResult) res = manager.search("tsh*");
     assert(res.isPresent());
-    PackageCandidate res_p = res.get().pack();
-    assert(res_p);
-    assert(res_p.getName() == "tshell");
 
-    manager.fetch(res_p);
+    SearchResult sr = res.get();
+    assert(sr);
 
-    auto l_res = manager.lookup(res_p);
+    Source res_src = sr.source();
+    assert(res_src is src);
+    PackageCandidate res_pack = sr.pack();
+    assert(res_pack);
+    assert(res_pack.getName() == "tshell");
+
+
+    manager.fetch(res_pack, res_src);
+
+    auto l_res = manager.lookup(res_pack);
     assert(l_res.is_okay());
     auto l_res_opt = l_res.ok();
     DEBUG(l_res_opt);
