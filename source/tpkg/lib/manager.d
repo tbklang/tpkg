@@ -633,12 +633,6 @@ public class PackageManager
     }
 }
 
-// public enum SourceKind
-// {
-//     LOCAL,
-//     HTTP
-// }
-
 import tpkg.lib.pack : Package, Version, PackageCandidate;
 
 public alias ProgressCallback = void delegate(ubyte[] got, size_t total);
