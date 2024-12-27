@@ -451,9 +451,6 @@ public class PackageManager
      */
     public StoreRef fetch(PackageCandidate pc, Source source)
     {
-        // Project root; // FIXME: Try and do without this
-        // VisitationTree!(Project) v = new VisitationTree!(Project)(root);
-
         bool[PackageCandidate] map;
 
         return fetch(pc, source, map);
