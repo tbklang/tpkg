@@ -118,6 +118,9 @@ public class PackageManager
 
     private string storePath;
 
+    private bool allowPackagelessAddressing;
+    private bool allowPackageAddressing;
+
     this()
     {
         this(expandTilde("~/.tpkg"));        
@@ -135,6 +138,10 @@ public class PackageManager
         }
 
         this.storePath = storePath;
+
+        // FIXME: Configuration
+        this.allowPackagelessAddressing = true;
+        this.allowPackageAddressing = true;
     }
 
     public void addSource(Source src)
@@ -510,14 +517,22 @@ public class PackageManager
         Compiler c = c_res.ok();
 
 
-        // TODO: Get a FULL deep list of dependencies here
-        // TODO: See if we even need the BuildDep instead of
-        // just a StoreRef
-        foreach(BuildDep build_dep; deps)
+        if(allowPackagelessAddressing)
         {
-            StoreRef build_dep_sr = build_dep.store();
-            c.getModMan().addSearchPath(build_dep_sr.getPackDir());
+            // TODO: See if we even need the BuildDep instead of
+            // just a StoreRef
+            foreach(BuildDep build_dep; deps)
+            {
+                StoreRef build_dep_sr = build_dep.store();
+                c.getModMan().addSearchPath(build_dep_sr.getPackDir());
+            }            
         }
+
+        if(allowPackageAddressing)
+        {
+            c.getModMan().addSearchPath(this.storePath);
+        }
+        
 
 
 
