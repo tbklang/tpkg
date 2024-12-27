@@ -499,9 +499,7 @@ public class PackageManager
                 Optional!(SearchResult) dep_opt = search(dep);
                 if(dep_opt.isEmpty())
                 {
-                    // FIXME: Implement error handling here
                     ERROR("Could not find dependency '", dep, "'!");
-                    // return error!(string, CompileResult)(format("Could not find dependency '%s'!", dep));
                     throw new TPkgException
                     (
                         format
@@ -533,11 +531,10 @@ public class PackageManager
                 INFO("Fetching dependency '", dep, "'...");
                 StoreRef dep_sr = fetch(dep_pc, dep_src, map); // TODO: Handle error
                 Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
+                assert(dep_p_res.is_okay()); // If fails, then somebody manipulated it whilst busy
 
                 Project dep_p = dep_p_res.ok();
-
-
-
+                DEBUG("Fetched dependency: ", dep_p);
             }
 
 
