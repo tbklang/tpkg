@@ -391,6 +391,11 @@ public class PackageManager
 
         Compiler c = c_res.ok();
 
+
+        // TODO: Get a FULL deep list of dependencies here
+
+
+
         import tlang.misc.exceptions : TError;
 
         try
@@ -423,11 +428,16 @@ public class PackageManager
     public StoreRef fetch(PackageCandidate pc, Source source)
     {
         bool[PackageCandidate] map;
+        // map[new PackageCandidate("ss", new DV("0.0.1"))] =false;
+        scope(exit)
+        {
+            DEBUG("Full list of dependencies: ", map.keys());
+        }
 
         return fetch(pc, source, map);
     }
 
-    private StoreRef fetch(PackageCandidate pc, Source source, bool[PackageCandidate] map)
+    private StoreRef fetch(PackageCandidate pc, Source source, ref bool[PackageCandidate] map)
     {
         ubyte[] data = source.fetch(pc); // TODO: Callback for progress of fetching
         DEBUG(format("Retrieved archive of %d bytes", data.length));
