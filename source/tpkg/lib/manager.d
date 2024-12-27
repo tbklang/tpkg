@@ -477,6 +477,7 @@ public class PackageManager
 
         import std.zip : ZipArchive, ZipException, ArchiveMember;
         
+        StoreRef s_ref;
         try
         {
             ZipArchive zar = new ZipArchive(data);
@@ -490,94 +491,7 @@ public class PackageManager
             }
 
             // Unpack the archive into the data store
-            auto s_ref = store(zar, pc.getName());
-            DEBUG(s_ref);
-
-            // From here onwards we are using a storage reference
-
-            // Validate package by attempting to
-            // parse it
-            auto l_res = parse(s_ref);
-            if(l_res.is_error())
-            {
-                // Remove from store
-                unstore(s_ref);
-
-                throw new TPkgException
-                (
-                    format
-                    (
-                        "Error validating package %s: %s",
-                        pc.getName(),
-                        l_res.error()
-                    )
-                );
-            }
-
-            Project l = l_res.ok();
-
-            // Pool current node
-            if((pc in map) is null)
-            {
-                map[pc] = false;
-            }
-
-            // Has it been visited?
-            if(map[pc])
-            {
-                return s_ref;
-            }
-
-            // Mark as visited
-            map[pc] = true;
-
-
-            // Build out dependencies and fetch them as well
-            foreach(string dep; l.getDependencies())
-            {
-                DEBUG("Searching for dependency '", dep, "'...");
-                Optional!(SearchResult) dep_opt = search(dep);
-                if(dep_opt.isEmpty())
-                {
-                    ERROR("Could not find dependency '", dep, "'!");
-                    throw new TPkgException
-                    (
-                        format
-                        (
-                            "Could not find dependency %s:",
-                            pc.getName()
-                        )
-                    );  
-                }
-
-                SearchResult sr = dep_opt.get();
-
-                Source dep_src = sr.source();
-                PackageCandidate dep_pc = sr.pack();
-
-                // Pool current node
-                if((dep_pc in map) is null)
-                {
-                    map[dep_pc] = false;
-                }
-
-                // Has it been visited?
-                if(map[dep_pc])
-                {
-                    continue;
-                }
-
-                INFO("Fetching dependency '", dep, "'...");
-                StoreRef dep_sr = fetch(dep_pc, dep_src, map); // TODO: Handle error
-                Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
-                assert(dep_p_res.is_okay()); // If fails, then somebody manipulated it whilst busy
-
-                Project dep_p = dep_p_res.ok();
-                DEBUG("Fetched dependency: ", dep_p);
-            }
-
-
-            return s_ref;
+            s_ref = store(zar, pc.getName());
         }
         catch(ZipException e)
         {
@@ -591,6 +505,94 @@ public class PackageManager
                 )
             );
         }
+
+
+        // From here onwards we are using a storage reference
+        DEBUG(s_ref);
+
+        // Validate package by attempting to
+        // parse it
+        auto l_res = parse(s_ref);
+        if(l_res.is_error())
+        {
+            // Remove from store
+            unstore(s_ref);
+
+            throw new TPkgException
+            (
+                format
+                (
+                    "Error validating package %s: %s",
+                    pc.getName(),
+                    l_res.error()
+                )
+            );
+        }
+
+        Project l = l_res.ok();
+
+        // Pool current node
+        if((pc in map) is null)
+        {
+            map[pc] = false;
+        }
+
+        // Has it been visited?
+        if(map[pc])
+        {
+            return s_ref;
+        }
+
+        // Mark as visited
+        map[pc] = true;
+
+
+        // Build out dependencies and fetch them as well
+        foreach(string dep; l.getDependencies())
+        {
+            DEBUG("Searching for dependency '", dep, "'...");
+            Optional!(SearchResult) dep_opt = search(dep);
+            if(dep_opt.isEmpty())
+            {
+                ERROR("Could not find dependency '", dep, "'!");
+                throw new TPkgException
+                (
+                    format
+                    (
+                        "Could not find dependency %s:",
+                        pc.getName()
+                    )
+                );  
+            }
+
+            SearchResult sr = dep_opt.get();
+
+            Source dep_src = sr.source();
+            PackageCandidate dep_pc = sr.pack();
+
+            // Pool current node
+            if((dep_pc in map) is null)
+            {
+                map[dep_pc] = false;
+            }
+
+            // Has it been visited?
+            if(map[dep_pc])
+            {
+                continue;
+            }
+
+            INFO("Fetching dependency '", dep, "'...");
+            StoreRef dep_sr = fetch(dep_pc, dep_src, map); // TODO: Handle error
+            Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
+            assert(dep_p_res.is_okay()); // If fails, then somebody manipulated it whilst busy
+
+            Project dep_p = dep_p_res.ok();
+            DEBUG("Fetched dependency: ", dep_p);
+        }
+
+
+        return s_ref;
     }
 
     public Optional!(SearchResult) search(string regex)
