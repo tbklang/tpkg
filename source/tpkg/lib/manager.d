@@ -464,20 +464,19 @@ public class PackageManager
         return FetchResult(root_sf, map.keys());
     }
 
-    private StoreRef fetch
-    (
-        PackageCandidate pc,
-        Source source,
-        ref bool[PackageCandidate] map,
-        bool offline = false
-    )
+    private Result!(Optional!(StoreRef), string) resolveOffline(PackageCandidate pc)
+    {
+        Result!(Optional!(StoreRef), string) s_ref_res = lookup(pc);
+        return s_ref_res;
+    }
+
+    private StoreRef resolveOnline(PackageCandidate pc, Source source)
     {
         ubyte[] data = source.fetch(pc); // TODO: Callback for progress of fetching
         DEBUG(format("Retrieved archive of %d bytes", data.length));
 
         import std.zip : ZipArchive, ZipException, ArchiveMember;
         
-        StoreRef s_ref;
         try
         {
             ZipArchive zar = new ZipArchive(data);
@@ -491,7 +490,8 @@ public class PackageManager
             }
 
             // Unpack the archive into the data store
-            s_ref = store(zar, pc.getName());
+            auto s_ref = store(zar, pc.getName());
+            return s_ref;
         }
         catch(ZipException e)
         {
@@ -505,7 +505,37 @@ public class PackageManager
                 )
             );
         }
+    }
 
+    private StoreRef fetch
+    (
+        PackageCandidate pc,
+        Source source,
+        ref bool[PackageCandidate] map,
+        bool offline = false
+    )
+    {
+        
+
+        StoreRef do_sr_get(PackageCandidate pc_in)
+        {
+            StoreRef s_ref_out;
+            if(!offline)
+            {
+                s_ref_out = resolveOnline(pc_in, source);
+            }
+            else
+            {
+                Result!(Optional!(StoreRef), string) s_ref_res = resolveOffline(pc_in);
+                // FIXME: Handle error above
+                Optional!(StoreRef) s_ref_opt = s_ref_res.ok();
+                // FIXME: Handle error above
+                s_ref_out = s_ref_opt.get();
+            }
+            return s_ref_out;
+        }
+
+        StoreRef s_ref = do_sr_get(pc); // TODO: handle error
 
         // From here onwards we are using a storage reference
         DEBUG(s_ref);
@@ -583,7 +613,8 @@ public class PackageManager
             }
 
             INFO("Fetching dependency '", dep, "'...");
-            StoreRef dep_sr = fetch(dep_pc, dep_src, map); // TODO: Handle error
+            // StoreRef dep_sr = fetch(dep_pc, dep_src, map); // TODO: Handle error
+            StoreRef dep_sr = do_sr_get(dep_pc); // TODO: Handle error
             Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
             assert(dep_p_res.is_okay()); // If fails, then somebody manipulated it whilst busy
 
