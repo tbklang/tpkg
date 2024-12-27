@@ -57,18 +57,22 @@ public class Package
 }
 
 /** 
- * Represents a candidiate returned
- * after performing a package search
+ * Represents a package that one
+ * is looking for. This is in
+ * an un-fully realized state.
  */
 public final class PackageCandidate
 {
     private string name;
     private Version ver;
+    private string ver_s;
 
     this(string name, Version ver)
     {
         this.name = name;
         this.ver = ver;
+
+        this.ver_s = ver.repr();
     }
 
     public string getName()
@@ -76,9 +80,34 @@ public final class PackageCandidate
         return this.name;
     }
 
-    public string getCmp()
+    public string getCmp() nothrow @safe
     {
-        return name~":"~ver.repr();
+        return name~":"~ver_s;
+    }
+    
+    public override bool opEquals(Object other)
+    {
+        PackageCandidate other_pc = cast(PackageCandidate)other;
+        if(other_pc is null)
+        {
+            return false;
+        }
+
+        import std.stdio : writeln;
+        writeln("doing equals");
+
+        return this.name == other_pc.name && this.ver.cmp(other_pc.ver) == 0;
+    }
+
+    override size_t toHash()  nothrow
+    {
+        string s = getCmp();
+        size_t i = 0;
+        foreach(char c; s)
+        {
+            i += c;
+        }
+        return i;
     }
 
     public override string toString()
@@ -86,6 +115,41 @@ public final class PackageCandidate
         import std.string : format;
         return format("PackageCandidate (%s/%s)", getName(), ver.repr());
     }
+}
+
+version(unittest)
+{
+    alias DV = DummyVersion;
+    class DummyVersion : Version
+    {
+        private string ver_s;
+        this(string ver)
+        {
+            this.ver_s = ver;
+        }
+
+        public long cmp(Version rhs)
+        {
+            return 0; // FIXME: Implement me
+        }
+
+        public string repr()
+        {
+            return ver_s;
+        }
+    }
+}
+
+unittest
+{
+    size_t[PackageCandidate] k;
+    PackageCandidate pc1 = new PackageCandidate("A", new DV("0.0.1"));
+    PackageCandidate pc2 = new PackageCandidate("A", new DV("0.0.1"));
+
+    k[pc1] = 1;
+    assert(k[pc2] == 1);
+
+    assert(pc1 == pc2);
 }
 
 /** 
