@@ -427,8 +427,6 @@ public class PackageManager
         return fetch(pc, source, map);
     }
 
-    import niknaks.containers : VisitationTree;
-
     private StoreRef fetch(PackageCandidate pc, Source source, bool[PackageCandidate] map)
     {
         ubyte[] data = source.fetch(pc); // TODO: Callback for progress of fetching
