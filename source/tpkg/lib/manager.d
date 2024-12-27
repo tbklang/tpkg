@@ -410,6 +410,28 @@ public class PackageManager
         }
     }
 
+    public struct FetchResult
+    {
+        private PackageCandidate[] deps;
+        private StoreRef root_sf;
+        
+        private this(StoreRef root_sf, PackageCandidate[] deps)
+        {
+            this.root_sf = root_sf;
+            this.deps = deps;
+        }
+
+        public PackageCandidate[] dependencies()
+        {
+            return this.deps;
+        }
+
+        public StoreRef store()
+        {
+            return this.root_sf;
+        }
+    }
+
     /** 
      * Fetches the package and stores
      * it in the package store
