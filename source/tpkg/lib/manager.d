@@ -774,7 +774,8 @@ version(unittest)
 
         public long cmp(Version rhs)
         {
-            return 0; // FIXME: Implement me
+            return ver_s == rhs.repr() ? 0 : -1; // FIXME: Implement me
+            // return 0; 
         }
 
         public string repr()
@@ -815,6 +816,9 @@ unittest
 
     FetchResult fetch_res = manager.fetch(res_pack, res_src);
     PackageCandidate[] resolved_deps = fetch_res.dependencies();
+    import niknaks.arrays : isPresent;
+    assert(isPresent(resolved_deps, new PackageCandidate("core", new DV("0.0.1"))));
+    assert(resolved_deps.length == 2);
 
     auto l_res = manager.lookup(res_pack);
     assert(l_res.is_okay());
