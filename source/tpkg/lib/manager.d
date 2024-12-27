@@ -461,6 +461,9 @@ public class PackageManager
 
         StoreRef root_sf = fetch(pc, source, map);
 
+        // remove root from dependency list
+        map.remove(pc);
+
         return FetchResult(root_sf, map.keys());
     }
 
@@ -840,7 +843,7 @@ unittest
     PackageCandidate[] resolved_deps = fetch_res.dependencies();
     import niknaks.arrays : isPresent;
     assert(isPresent(resolved_deps, new PackageCandidate("core", new DV("0.0.1"))));
-    assert(resolved_deps.length == 2);
+    assert(resolved_deps.length == 1);
 
     auto l_res = manager.lookup(res_pack);
     assert(l_res.is_okay());
