@@ -140,7 +140,7 @@ public class PackageManager
         this.storePath = storePath;
 
         // FIXME: Configuration
-        this.allowPackagelessAddressing = true;
+        this.allowPackagelessAddressing = false;
         this.allowPackageAddressing = true;
     }
 
