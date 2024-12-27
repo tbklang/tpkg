@@ -939,7 +939,7 @@ unittest
     assert(isPresent(resolved_deps, new PackageCandidate("core", new DV("0.0.1"))));
     assert(resolved_deps.length == 1);
 
-    manager.build2(fetch_res);
+    manager.build(fetch_res);
 
     // TODO: Re-enable some of the below?
     // auto l_res = manager.lookup(res_pack);
