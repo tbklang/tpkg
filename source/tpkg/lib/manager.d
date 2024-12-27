@@ -492,11 +492,9 @@ public class PackageManager
             map[pc] = true;
 
 
-
+            // Build out dependencies and fetch them as well
             foreach(string dep; l.getDependencies())
             {
-                
-
                 DEBUG("Searching for dependency '", dep, "'...");
                 Optional!(SearchResult) dep_opt = search(dep);
                 if(dep_opt.isEmpty())
@@ -518,8 +516,9 @@ public class PackageManager
 
                 Source dep_src = sr.source();
                 PackageCandidate dep_pc = sr.pack();
+
+                // Pool current node
                 bool* dep_ent = dep_pc in map;
-                // Pool
                 if(dep_ent is null)
                 {
                     map[dep_pc] = false;
@@ -581,12 +580,6 @@ public class PackageManager
                     )
                 );
             }
-        }
-
-        // Realise dependency packages
-        void blit()
-        {
-
         }
 
         return matches.length ? Optional!(SearchResult)(matches[0]) : Optional!(SearchResult).empty();
