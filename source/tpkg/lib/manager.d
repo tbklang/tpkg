@@ -517,12 +517,12 @@ public class PackageManager
     {
         
 
-        StoreRef do_sr_get(PackageCandidate pc_in)
+        StoreRef do_sr_get(PackageCandidate pc_in, Source src_in)
         {
             StoreRef s_ref_out;
             if(!offline)
             {
-                s_ref_out = resolveOnline(pc_in, source);
+                s_ref_out = resolveOnline(pc_in, src_in);
             }
             else
             {
@@ -535,7 +535,7 @@ public class PackageManager
             return s_ref_out;
         }
 
-        StoreRef s_ref = do_sr_get(pc); // TODO: handle error
+        StoreRef s_ref = do_sr_get(pc, source); // TODO: handle error
 
         // From here onwards we are using a storage reference
         DEBUG(s_ref);
@@ -614,7 +614,7 @@ public class PackageManager
 
             INFO("Fetching dependency '", dep, "'...");
             // StoreRef dep_sr = fetch(dep_pc, dep_src, map); // TODO: Handle error
-            StoreRef dep_sr = do_sr_get(dep_pc); // TODO: Handle error
+            StoreRef dep_sr = do_sr_get(dep_pc, dep_src); // TODO: Handle error
             Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
             assert(dep_p_res.is_okay()); // If fails, then somebody manipulated it whilst busy
 
