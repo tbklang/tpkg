@@ -474,8 +474,7 @@ public class PackageManager
             import niknaks.containers : Graph;
 
             // Pool current node
-            bool* map_ent = pc in map;
-            if(map_ent is null)
+            if((pc in map) is null)
             {
                 map[pc] = false;
             }
@@ -514,8 +513,7 @@ public class PackageManager
                 PackageCandidate dep_pc = sr.pack();
 
                 // Pool current node
-                bool* dep_ent = dep_pc in map;
-                if(dep_ent is null)
+                if((dep_pc in map) is null)
                 {
                     map[dep_pc] = false;
                 }
