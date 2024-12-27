@@ -535,6 +535,8 @@ public class PackageManager
             return s_ref_out;
         }
 
+        // Obtain the storage reference according to the current online/offline
+        // policy
         StoreRef s_ref = do_sr_get(pc, source); // TODO: handle error
 
         // From here onwards we are using a storage reference
