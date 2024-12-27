@@ -20,7 +20,7 @@ import std.string : format;
 import std.path : buildPath, pathSplitter;
 import niknaks.functional : Result, Optional, ok, error;
 import tlang.compiler.core : CompileResult;
-import tpkg.lib.pack : SearchResult;
+import tpkg.lib.pack : Package, Version, PackageCandidate, SearchResult;
 
 /** 
  * A package manager which
@@ -592,8 +592,6 @@ public class PackageManager
         return matches.length ? Optional!(SearchResult)(matches[0]) : Optional!(SearchResult).empty();
     }
 }
-
-import tpkg.lib.pack : Package, Version, PackageCandidate;
 
 public alias ProgressCallback = void delegate(ubyte[] got, size_t total);
 
