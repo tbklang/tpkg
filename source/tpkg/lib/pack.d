@@ -119,25 +119,7 @@ public final class PackageCandidate
 
 version(unittest)
 {
-    alias DV = DummyVersion;
-    class DummyVersion : Version
-    {
-        private string ver_s;
-        this(string ver)
-        {
-            this.ver_s = ver;
-        }
-
-        public long cmp(Version rhs)
-        {
-            return 0; // FIXME: Implement me
-        }
-
-        public string repr()
-        {
-            return ver_s;
-        }
-    }
+    import tpkg.lib.testing : DV;
 }
 
 unittest
