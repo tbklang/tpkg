@@ -454,14 +454,14 @@ public class PackageManager
         // Project root; // FIXME: Try and do without this
         // VisitationTree!(Project) v = new VisitationTree!(Project)(root);
 
-        bool[string] map;
+        bool[PackageCandidate] map;
 
         return fetch(pc, source, map);
     }
 
     import niknaks.containers : VisitationTree;
 
-    private StoreRef fetch(PackageCandidate pc, Source source, bool[string] map)
+    private StoreRef fetch(PackageCandidate pc, Source source, bool[PackageCandidate] map)
     {
         ubyte[] data = source.fetch(pc); // TODO: Callback for progress of fetching
         DEBUG(format("Retrieved archive of %d bytes", data.length));
@@ -508,20 +508,20 @@ public class PackageManager
             import niknaks.containers : Graph;
 
             // Pool current node
-            bool* map_ent = pc.getCmp() in map;
+            bool* map_ent = pc in map;
             if(map_ent is null)
             {
-                map[pc.getCmp()] = false;
+                map[pc] = false;
             }
 
             // Has it been visited?
-            if(map[pc.getCmp()])
+            if(map[pc])
             {
                 return s_ref;
             }
 
             // Mark as visited
-            map[pc.getCmp()] = true;
+            map[pc] = true;
 
 
 
@@ -558,15 +558,15 @@ public class PackageManager
 
                 Source dep_src = sr.source();
                 PackageCandidate dep_pc = sr.pack();
-                bool* dep_ent = dep_pc.getCmp() in map;
+                bool* dep_ent = dep_pc in map;
                 // Pool
                 if(dep_ent is null)
                 {
-                    map[dep_pc.getCmp()] = false;
+                    map[dep_pc] = false;
                 }
 
                 // Has it been visited?
-                if(map[dep_pc.getCmp()])
+                if(map[dep_pc])
                 {
                     continue;
                 }
@@ -871,6 +871,9 @@ unittest
     assert(l_res_opt.isPresent());
     manager.build(l_res_opt.get());
 }
+
+// TODO: Add another test with a better DummySoirce that
+// doesn't require an internet connection
 
 // unittest
 // {
