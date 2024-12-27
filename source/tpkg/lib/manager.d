@@ -464,7 +464,13 @@ public class PackageManager
         return FetchResult(root_sf, map.keys());
     }
 
-    private StoreRef fetch(PackageCandidate pc, Source source, ref bool[PackageCandidate] map)
+    private StoreRef fetch
+    (
+        PackageCandidate pc,
+        Source source,
+        ref bool[PackageCandidate] map,
+        bool offline = false
+    )
     {
         ubyte[] data = source.fetch(pc); // TODO: Callback for progress of fetching
         DEBUG(format("Retrieved archive of %d bytes", data.length));
@@ -487,6 +493,8 @@ public class PackageManager
             auto s_ref = store(zar, pc.getName());
             DEBUG(s_ref);
 
+            // From here onwards we are using a storage reference
+
             // Validate package by attempting to
             // parse it
             auto l_res = parse(s_ref);
@@ -507,8 +515,6 @@ public class PackageManager
             }
 
             Project l = l_res.ok();
-
-            import niknaks.containers : Graph;
 
             // Pool current node
             if((pc in map) is null)
