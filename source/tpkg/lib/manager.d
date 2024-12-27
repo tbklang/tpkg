@@ -428,7 +428,6 @@ public class PackageManager
     public StoreRef fetch(PackageCandidate pc, Source source)
     {
         bool[PackageCandidate] map;
-        // map[new PackageCandidate("ss", new DV("0.0.1"))] =false;
         scope(exit)
         {
             DEBUG("Full list of dependencies: ", map.keys());
