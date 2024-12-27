@@ -460,9 +460,17 @@ public class PackageManager
         foreach(PackageCandidate dep_pc; fr.dependencies())
         {
             Result!(Optional!(StoreRef), string) dep_sr_res = lookup(dep_pc);
-            //FIXME: check errors above
+            if(dep_sr_res.is_error())
+            {
+                return error!(string, CompileResult)(format("Error looking up dependency '%s'", dep_pc.getName()));
+            }
+
             Optional!(StoreRef) dep_sr_opt = dep_sr_res.ok();
-            //FIXME: check errors above
+            if(dep_sr_opt.isEmpty())
+            {
+                return error!(string, CompileResult)(format("Dependency '%s' not found", dep_pc.getName()));
+            }
+
             StoreRef dep_sr = dep_sr_opt.get();
             deps ~= BuildDep(dep_pc, dep_sr);
         }
