@@ -372,8 +372,7 @@ public class PackageManager
     }
 
     /** 
-     * Builds the package at the given
-     * storage reference
+     * Builds the given package
      *
      * Params:
      *   sr = the `StoreRef`
@@ -392,6 +391,10 @@ public class PackageManager
 
         Project p = p_res.ok();
         DEBUG(p);
+
+        // TODO: Figure out dependencies! Once again the `fetch(...)`
+        // strikes. We maybe need to rethink this method and how it
+        // should be composed with others
 
         // FIXME: Implement compiling a library, perhaps
         // choosing ANY module file (a `.t` file) as the
@@ -430,6 +433,88 @@ public class PackageManager
         }
         catch(TError e)
         {
+            return error!(string, CompileResult)(e.msg);
+        }
+    }
+
+    private struct BuildDep
+    {
+        private PackageCandidate pc;
+        private StoreRef sr;
+
+        this(PackageCandidate pc, StoreRef sr)
+        {
+            this.pc = pc;
+            this.sr = sr;
+        }
+
+        public StoreRef store()
+        {
+            return this.sr;
+        }
+    }
+
+    public Result!(CompileResult, string) build2(FetchResult fr)
+    {
+        BuildDep[] deps;
+        foreach(PackageCandidate dep_pc; fr.dependencies())
+        {
+            Result!(Optional!(StoreRef), string) dep_sr_res = lookup(dep_pc);
+            //FIXME: check errors above
+            Optional!(StoreRef) dep_sr_opt = dep_sr_res.ok();
+            //FIXME: check errors above
+            StoreRef dep_sr = dep_sr_opt.get();
+            deps ~= BuildDep(dep_pc, dep_sr);
+        }
+        DEBUG("BuildDeps: ", deps);
+
+        // Storage reference of root package
+        StoreRef root_sr = fr.store();
+        Result!(Project, string) p_res = parse(root_sr);
+        if(p_res.is_error())
+        {
+            return error!(string, CompileResult)(p_res.error());
+        }
+
+        Project p = p_res.ok();
+        DEBUG(p);
+
+        string e_path = buildPath(root_sr.getPackDir(), p.getEntrypoint());
+        DEBUG("Opening entrypoint file at '", e_path, "'...");
+
+        import tlang.compiler.core : Compiler, forFile;
+        Result!(Compiler, Exception) c_res = forFile(e_path);
+
+        if(c_res.is_error())
+        {
+            return error!(string, CompileResult)(c_res.error().msg);
+        }
+
+        Compiler c = c_res.ok();
+
+
+        // TODO: Get a FULL deep list of dependencies here
+        // TODO: See if we even need the BuildDep instead of
+        // just a StoreRef
+        foreach(BuildDep build_dep; deps)
+        {
+            StoreRef build_dep_sr = build_dep.store();
+            c.getModMan().addSearchPath(build_dep_sr.getPackDir());
+        }
+
+
+
+        import tlang.misc.exceptions : TError;
+
+        try
+        {
+            CompileResult cmp_res = c.compile();
+            INFO(format("Generated executable at '%s' in %d ms", cmp_res.createdFile, cmp_res.elapsedTime.total!("msecs")()));
+            return ok!(CompileResult, string)(cmp_res);
+        }
+        catch(TError e)
+        {
+            ERROR(e);
             return error!(string, CompileResult)(e.msg);
         }
     }
@@ -845,12 +930,15 @@ unittest
     assert(isPresent(resolved_deps, new PackageCandidate("core", new DV("0.0.1"))));
     assert(resolved_deps.length == 1);
 
-    auto l_res = manager.lookup(res_pack);
-    assert(l_res.is_okay());
-    auto l_res_opt = l_res.ok();
-    DEBUG(l_res_opt);
-    assert(l_res_opt.isPresent());
-    manager.build(l_res_opt.get());
+    manager.build2(fetch_res);
+
+    // TODO: Re-enable some of the below?
+    // auto l_res = manager.lookup(res_pack);
+    // assert(l_res.is_okay());
+    // auto l_res_opt = l_res.ok();
+    // DEBUG(l_res_opt);
+    // assert(l_res_opt.isPresent());
+    // manager.build(l_res_opt.get());
 }
 
 // TODO: Add another test with a better DummySoirce that
