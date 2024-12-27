@@ -369,35 +369,6 @@ public class PackageManager
         Project p = p_res.ok();
         DEBUG(p);
 
-        // // TODO: Add dependency fetching here
-        // VisitationTree!(Package) dep_tree = new VisitationTree!(Package)(p);
-        // buildDepFrom(p, dep_tree);
-
-        // string[] dependencies = p.getDependencies();
-        // INFO("Fetching ", dependencies.length, " dependencies...");
-        // foreach(string dep; dependencies)
-        // {
-        //     INFO("Fetching dependency '", dep, "'...");
-        //     Optional!(PackageCandidate) dep_opt = search(dep);
-        //     if(dep_opt.isEmpty())
-        //     {
-        //         ERROR("Could not find dependency '", dep, "'!");
-        //         return error!(string, CompileResult)(format("Could not find dependency '%s'!", dep));
-        //     }
-            
-            
-        //     Package dep_pack = dep_opt.get();
-        //     // VisitationTree!(Project) dep_node = new VisitationTree!(Project)(dep_pack);
-        //     fetch(dep_pack); // fetch dependency
-        //     // FIXME: Error check above
-        //     Result!(Optional!(StoreRef), string) dep_sref = lookup(dep_pack); // parse it
-        //     // FIXME: Error check above
-        //     INFO("Fetched dependency '", dep, "'");
-
-
-        //     // dep_tree.appendNode(dep_pack);
-        // }
-
         // FIXME: Implement compiling a library, perhaps
         // choosing ANY module file (a `.t` file) as the
         // entrypoint would work
