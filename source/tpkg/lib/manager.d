@@ -598,30 +598,6 @@ public class PackageManager
         }
     }
 
-    // import niknaks.containers : VisitationTree;
-    // private VisitationTree!(Package) buildDepFrom
-    // (
-    //     Package rootPackage,
-    //     VisitationTree!(Package) tree
-    // )
-    // {
-    //     foreach(Package dep; rootPackage.getDependencies())
-    //     {
-    //         Optional!(Package) dep_pack_opt = search(dep);
-    //         if(dep_pack_opt.isEmpty())
-    //         {
-    //             ERROR(format("Could not find dependency '%s' required for '%s'", dep, rootPackage.getName()));
-    //             // FIXME: Throw error maybe
-    //             return null;
-    //         }
-
-    //         Package dep_pack = dep_pack_opt.get();
-    //         *(cast(char*)0) = 0;
-    //     }
-
-    //     return null;
-    // }
-
     public Optional!(SearchResult) search(string regex)
     {
         // TODO: Return a list of candidates in future
