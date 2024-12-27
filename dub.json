@@ -6,7 +6,7 @@
 	"dependencies": {
 		"gogga": ">=3.1.1",
 		"jcli": "0.25.0-beta.3",
-		"niknaks": ">=0.20.0",
+		"niknaks": ">=0.23.11",
 		"progress": "~>5.0.2",
 		"tlang": "~feature/comments"
 	},
