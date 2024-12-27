@@ -525,14 +525,6 @@ public class PackageManager
 
 
 
-
-
-
-            // VisitationTree!(Project) dep_tree = new VisitationTree!(Project)(l);
-            // dep_tree.mark();
-
-            // _v.appendNode(dep_tree);
-
             foreach(string dep; l.getDependencies())
             {
                 
