@@ -22,6 +22,50 @@ import niknaks.functional : Result, Optional, ok, error;
 import tlang.compiler.core : CompileResult;
 import tpkg.lib.pack : Package, Version, PackageCandidate, SearchResult;
 
+// TODO: Move elsewhere
+public struct StoreRef
+{
+    private string packDir;
+    
+    this(string packDir)
+    {
+        this.packDir = packDir;
+    }
+
+    public string getPackDir()
+    {
+        return this.packDir;
+    }
+
+    public string getDescrPath()
+    {
+        return buildPath(this.packDir, "t.pkg");
+    }
+}
+
+// TODO: Move elsewhere
+public struct FetchResult
+{
+    private PackageCandidate[] deps;
+    private StoreRef root_sf;
+    
+    private this(StoreRef root_sf, PackageCandidate[] deps)
+    {
+        this.root_sf = root_sf;
+        this.deps = deps;
+    }
+
+    public PackageCandidate[] dependencies()
+    {
+        return this.deps;
+    }
+
+    public StoreRef store()
+    {
+        return this.root_sf;
+    }
+}
+
 /** 
  * A package manager which
  * can resolve dependencies
@@ -101,26 +145,6 @@ public class PackageManager
     public void removeSource(Source src)
     {
         this.sources.linearRemoveElement(src);
-    }
-
-    private struct StoreRef
-    {
-        private string packDir;
-        
-        this(string packDir)
-        {
-            this.packDir = packDir;
-        }
-
-        public string getPackDir()
-        {
-            return this.packDir;
-        }
-
-        public string getDescrPath()
-        {
-            return buildPath(this.packDir, "t.pkg");
-        }
     }
 
     /** 
@@ -410,28 +434,6 @@ public class PackageManager
         }
     }
 
-    public struct FetchResult
-    {
-        private PackageCandidate[] deps;
-        private StoreRef root_sf;
-        
-        private this(StoreRef root_sf, PackageCandidate[] deps)
-        {
-            this.root_sf = root_sf;
-            this.deps = deps;
-        }
-
-        public PackageCandidate[] dependencies()
-        {
-            return this.deps;
-        }
-
-        public StoreRef store()
-        {
-            return this.root_sf;
-        }
-    }
-
     /** 
      * Fetches the package and stores
      * it in the package store
@@ -444,10 +446,12 @@ public class PackageManager
      *   TPkgException on error fetching
      * the provided package or validating
      * it
-     * Returns: a `StoreRef` for the fetched
-     * package
+     * Returns: a `FetchResult` which includes
+     * a storage reference for the requested
+     * package along with a list of all
+     * dependencies resolved
      */
-    public StoreRef fetch(PackageCandidate pc, Source source)
+    public FetchResult fetch(PackageCandidate pc, Source source)
     {
         bool[PackageCandidate] map;
         scope(exit)
@@ -455,7 +459,9 @@ public class PackageManager
             DEBUG("Full list of dependencies: ", map.keys());
         }
 
-        return fetch(pc, source, map);
+        StoreRef root_sf = fetch(pc, source, map);
+
+        return FetchResult(root_sf, map.keys());
     }
 
     private StoreRef fetch(PackageCandidate pc, Source source, ref bool[PackageCandidate] map)
@@ -807,7 +813,8 @@ unittest
     assert(res_pack.getName() == "tshell");
 
 
-    manager.fetch(res_pack, res_src);
+    FetchResult fetch_res = manager.fetch(res_pack, res_src);
+    PackageCandidate[] resolved_deps = fetch_res.dependencies();
 
     auto l_res = manager.lookup(res_pack);
     assert(l_res.is_okay());
