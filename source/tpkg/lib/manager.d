@@ -961,7 +961,8 @@ unittest
     PackageCandidate[] resolved_deps = fetch_res.dependencies();
     import niknaks.arrays : isPresent;
     assert(isPresent(resolved_deps, new PackageCandidate("core", new DV("0.0.1"))));
-    assert(resolved_deps.length == 1);
+    assert(isPresent(resolved_deps, new PackageCandidate("cbind", new DV("0.0.1"))));
+    assert(resolved_deps.length == 2);
 
     manager.build(fetch_res);
 
