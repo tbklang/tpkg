@@ -700,6 +700,7 @@ public class PackageManager
 
 
         // Build out dependencies and fetch them as well
+        ERROR("depps: ", l.getDependencies());
         foreach(string dep; l.getDependencies())
         {
             DEBUG("Searching for dependency '", dep, "'...");
@@ -735,8 +736,7 @@ public class PackageManager
             }
 
             INFO("Fetching dependency '", dep, "'...");
-            // StoreRef dep_sr = fetch(dep_pc, dep_src, map); // TODO: Handle error
-            StoreRef dep_sr = do_sr_get(dep_pc, dep_src); // TODO: Handle error
+            StoreRef dep_sr = fetch(dep_pc, dep_src, map, offline);
             Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
             assert(dep_p_res.is_okay()); // If fails, then somebody manipulated it whilst busy
 
@@ -935,7 +935,8 @@ unittest
     PackageCandidate[] bogus =
     [
         new PackageCandidate("tshell", new DV("0.0.1")),
-        new PackageCandidate("core",  new DV("0.0.1"))
+        new PackageCandidate("core",  new DV("0.0.1")),
+        new PackageCandidate("cbind",  new DV("0.0.1"))
     ];
     src.setEntries(bogus);
     manager.addSource(src);
