@@ -212,6 +212,35 @@ public struct Project
         }
         proj.setDependencies(deps);
 
+        JSONValue* buildPtr = "build" in json;
+        if(buildPtr)
+        {
+            if(buildPtr.type() == JSONType.OBJECT)
+            {
+                JSONValue* linkPtr = "links" in *buildPtr;
+                if(linkPtr)
+                {
+                    if(linkPtr.type() == JSONType.ARRAY)
+                    {
+                        string[] links;
+                        foreach(JSONValue links_JSON; linkPtr.array())
+                        {
+                            links ~= links_JSON.str();
+                        }
+                        proj.setLinks(links);
+                    }
+                    else
+                    {
+                        return error!(string, Project)(format("A links must be a list not a '%s'", linkPtr.type()));
+                    }
+                }
+            }
+            else
+            {
+                return error!(string, Project)(format("A build must be an object not a '%s'", buildPtr.type()));
+            }
+        }
+
         return ok!(Project, string)(proj);
     }   
 }
