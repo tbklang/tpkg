@@ -577,16 +577,8 @@ public class PackageManager
         VisitationTree!(PackageCandidate) tree = new VisitationTree!(PackageCandidate)(null);
 
         bool[PackageCandidate] map;
-        scope(exit)
-        {
-            // DEBUG("Full list of dependencies: ", map.keys());
-            // DEBUG("Linearized dependencies: ", tree.linearize());
-        }
 
         StoreRef root_sf = fetch(pc, source, map, tree);
-
-        // remove root from dependency list
-        // map.remove(pc);
 
         // linearize the tree
         PackageCandidate[] dep_lin_org = tree.linearize();
@@ -597,16 +589,9 @@ public class PackageManager
         PackageCandidate[] dep_lin = dep_lin_org[0..$-1];
 
         // if only one element then it is us ourselves
-        // which we don't count as a dependency
-        if(dep_lin.length == 1)
-        {
-            dep_lin = [];
-        }
-        // else, we have dependencies left from $-1
-        else
-        {
-            dep_lin = dep_lin[0..$-1];
-        }
+        // which we don't count as a dependency, else
+        // we have dependencies left from $-1
+        dep_lin = dep_lin.length == 1 ? [] : dep_lin[0..$-1];
         DEBUG(dep_lin);
 
         return FetchResult(root_sf, dep_lin);
