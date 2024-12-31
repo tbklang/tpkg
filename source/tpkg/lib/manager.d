@@ -700,7 +700,6 @@ public class PackageManager
 
 
         // Build out dependencies and fetch them as well
-        ERROR("depps: ", l.getDependencies());
         foreach(string dep; l.getDependencies())
         {
             DEBUG("Searching for dependency '", dep, "'...");
