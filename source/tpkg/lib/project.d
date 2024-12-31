@@ -217,7 +217,7 @@ public struct Project
         {
             if(buildPtr.type() == JSONType.OBJECT)
             {
-                JSONValue* linkPtr = "links" in *buildPtr;
+                JSONValue* linkPtr = "link" in *buildPtr;
                 if(linkPtr)
                 {
                     if(linkPtr.type() == JSONType.ARRAY)
@@ -252,6 +252,7 @@ unittest
     proj.setName("tpkg");
     proj.setDescription("The TLang package manager");
     proj.setType(ProjectType.APPLICATION);
+    proj.setLinks(["std1", "std2"]);
 
     JSONValue json = proj.serialize();
 
@@ -263,4 +264,5 @@ unittest
     assert(proj.getName() == projOut.getName());
     assert(proj.getDescription() == projOut.getDescription());
     assert(proj.getType() == ProjectType.APPLICATION);
+    assert(proj.getLinks() == projOut.getLinks());
 }
