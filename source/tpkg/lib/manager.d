@@ -417,6 +417,26 @@ public class PackageManager
         }
         DEBUG("BuildDeps: ", deps);
 
+        // Build up the list of linking requests
+        string[] links;
+        foreach(BuildDep bd; deps)
+        {
+            StoreRef bd_sr = bd.store();
+            Result!(Project, string) bd_p_res = parse(bd_sr);
+            if(bd_p_res.is_error())
+            {
+                return error!(string, CompileResult)(bd_p_res.error());
+            }
+
+            Project bd_p = bd_p_res.ok();
+            DEBUG(bd_p);
+            foreach(string link; bd_p.getLinks())
+            {
+                links ~= buildPath(bd_sr.getPackDir(), link);
+            }
+        }
+        DEBUG("Links are: ", links);
+
         // Storage reference of root package
         StoreRef root_sr = fr.store();
         Result!(Project, string) p_res = parse(root_sr);
@@ -449,6 +469,11 @@ public class PackageManager
         }
 
         Compiler c = c_res.ok();
+
+        if(links.length)
+        {
+            c.getConfig().addConfig("linker:link_files", links);
+        }
 
 
         if(allowPackagelessAddressing)
