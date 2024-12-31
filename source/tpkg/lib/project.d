@@ -35,6 +35,7 @@ public struct Project
     private ProjectType type;
     private string entrypoint;
     private string[] dependencies;
+    private string[] links;
 
     public void setName(string name)
     {
@@ -86,6 +87,16 @@ public struct Project
         return this.dependencies;
     }
 
+    public string[] getLinks()
+    {
+        return this.links;
+    }
+
+    public void setLinks(string[] links)
+    {
+        this.links = links;
+    }
+
     public JSONValue serialize()
     {
         JSONValue root;
@@ -100,6 +111,20 @@ public struct Project
         if(this.type == ProjectType.APPLICATION)
         {
             root["entrypoint"] = this.entrypoint;
+        }
+
+        
+
+        JSONValue buildObj = JSONValue.emptyObject;
+
+        if(this.links.length)
+        {
+            buildObj["link"] = this.links;
+        }
+
+        if(!buildObj.isNull())
+        {
+            root["build"] = buildObj;
         }
 
         DEBUG(format("Serialized to: %s ", root));
