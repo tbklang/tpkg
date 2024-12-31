@@ -122,7 +122,7 @@ public struct Project
             buildObj["link"] = this.links;
         }
 
-        if(!buildObj.isNull())
+        if(buildObj != JSONValue.emptyObject)
         {
             root["build"] = buildObj;
         }
