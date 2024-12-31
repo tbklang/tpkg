@@ -461,6 +461,7 @@ public class PackageManager
         }
     }
 
+    // FIXME: We need a TREE!
     public Result!(CompileResult, string) build(FetchResult fr)
     {
         BuildDep[] deps;
@@ -551,6 +552,8 @@ public class PackageManager
         }
     }
 
+    import niknaks.containers : VisitationTree;
+
     /** 
      * Fetches the package and stores
      * it in the package store
@@ -570,18 +573,43 @@ public class PackageManager
      */
     public FetchResult fetch(PackageCandidate pc, Source source)
     {
+        // create null root
+        VisitationTree!(PackageCandidate) tree = new VisitationTree!(PackageCandidate)(null);
+
         bool[PackageCandidate] map;
         scope(exit)
         {
-            DEBUG("Full list of dependencies: ", map.keys());
+            // DEBUG("Full list of dependencies: ", map.keys());
+            // DEBUG("Linearized dependencies: ", tree.linearize());
         }
 
-        StoreRef root_sf = fetch(pc, source, map);
+        StoreRef root_sf = fetch(pc, source, map, tree);
 
         // remove root from dependency list
-        map.remove(pc);
+        // map.remove(pc);
 
-        return FetchResult(root_sf, map.keys());
+        // linearize the tree
+        PackageCandidate[] dep_lin_org = tree.linearize();
+        DEBUG("dep_lin_org: ", dep_lin_org);
+        
+
+        // remove null root node at the end
+        PackageCandidate[] dep_lin = dep_lin_org[0..$-1];
+
+        // if only one element then it is us ourselves
+        // which we don't count as a dependency
+        if(dep_lin.length == 1)
+        {
+            dep_lin = [];
+        }
+        // else, we have dependencies left from $-1
+        else
+        {
+            dep_lin = dep_lin[0..$-1];
+        }
+        DEBUG(dep_lin);
+
+        return FetchResult(root_sf, dep_lin);
     }
 
     private Result!(Optional!(StoreRef), string) resolveOffline(PackageCandidate pc)
@@ -632,6 +660,7 @@ public class PackageManager
         PackageCandidate pc,
         Source source,
         ref bool[PackageCandidate] map,
+        VisitationTree!(PackageCandidate) tree,
         bool offline = false
     )
     {
@@ -698,6 +727,9 @@ public class PackageManager
         // Mark as visited
         map[pc] = true;
 
+        VisitationTree!(PackageCandidate) d = new VisitationTree!(PackageCandidate)(pc);
+        tree.appendNode(d);
+
 
         // Build out dependencies and fetch them as well
         foreach(string dep; l.getDependencies())
@@ -735,7 +767,7 @@ public class PackageManager
             }
 
             INFO("Fetching dependency '", dep, "'...");
-            StoreRef dep_sr = fetch(dep_pc, dep_src, map, offline);
+            StoreRef dep_sr = fetch(dep_pc, dep_src, map, d, offline);
             Result!(Project, string) dep_p_res = parse(dep_sr); // TODO: Handle error
             assert(dep_p_res.is_okay()); // If fails, then somebody manipulated it whilst busy
 
