@@ -432,7 +432,10 @@ public class PackageManager
             DEBUG(bd_p);
             foreach(string link; bd_p.getLinks())
             {
-                links ~= buildPath(bd_sr.getPackDir(), link);
+                import std.path : isAbsolute;
+                // Absolute paths stay the same, relative ones are nested
+                // within their pack dir
+                links ~= isAbsolute(link) ? link : buildPath(bd_sr.getPackDir(), link);
             }
         }
         DEBUG("Links are: ", links);
