@@ -464,6 +464,7 @@ public class PackageManager
         DEBUG("Opening entrypoint file at '", e_path, "'...");
 
         import tlang.compiler.core : Compiler, forFile;
+        import tlang.compiler.configuration : CompilerConfiguration;
         Result!(Compiler, Exception) c_res = forFile(e_path);
 
         if(c_res.is_error())
@@ -472,10 +473,16 @@ public class PackageManager
         }
 
         Compiler c = c_res.ok();
+        CompilerConfiguration c_cfg = c.getConfig();
 
         if(links.length)
         {
-            c.getConfig().addConfig("linker:link_files", links);
+            c_cfg.addConfig("linker:link_files", links);
+        }
+
+        if(p.getOutput().length)
+        {
+            c_cfg.addConfig("emit:executable_output", p.getOutput());
         }
 
 

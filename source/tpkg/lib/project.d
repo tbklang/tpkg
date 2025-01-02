@@ -35,7 +35,9 @@ public struct Project
     private ProjectType type;
     private string entrypoint;
     private string[] dependencies;
+    
     private string[] links;
+    private string output;
 
     public void setName(string name)
     {
@@ -97,6 +99,16 @@ public struct Project
         this.links = links;
     }
 
+    public void setOutput(string output)
+    {
+        this.output = output;
+    }
+
+    public string getOutput()
+    {
+        return this.output;
+    }
+
     public JSONValue serialize()
     {
         JSONValue root;
@@ -120,6 +132,11 @@ public struct Project
         if(this.links.length)
         {
             buildObj["link"] = this.links;
+        }
+
+        if(this.output)
+        {
+            buildObj["output"] = this.output;
         }
 
         if(buildObj != JSONValue.emptyObject)
@@ -232,6 +249,19 @@ public struct Project
                     else
                     {
                         return error!(string, Project)(format("A links must be a list not a '%s'", linkPtr.type()));
+                    }
+                }
+
+                JSONValue* outputPtr = "output" in *buildPtr;
+                if(outputPtr)
+                {
+                    if(outputPtr.type() == JSONType.STRING)
+                    {
+                        proj.setOutput(outputPtr.str());
+                    }
+                    else
+                    {
+                        return error!(string, Project)(format("The output name must be a string not a '%s'", outputPtr.type()));
                     }
                 }
             }
